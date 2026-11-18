@@ -19,6 +19,7 @@ public class Utilisateur {
     private Long id;
     private String nom;
     private String prenom;
+    @Column(unique = true, nullable = false)
     private String email;
     private String motDePasse;
     private String photoUrl;
@@ -28,6 +29,7 @@ public class Utilisateur {
     private LocalDateTime dateCreation;
     @PrePersist
     public void prePersist() {
+
         dateCreation = LocalDateTime.now();
     }
     @OneToMany (mappedBy = "auteur")
