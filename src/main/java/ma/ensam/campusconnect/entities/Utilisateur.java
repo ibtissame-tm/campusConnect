@@ -24,7 +24,7 @@ public class Utilisateur {
     private String motDePasse;
     private String photoUrl;
     @Enumerated(EnumType.STRING)
-    private RoleGlobal rolGlobal;
+    private RoleGlobal roleGlobal;
     private boolean active;
     private LocalDateTime dateCreation;
     @PrePersist
@@ -40,8 +40,5 @@ public class Utilisateur {
     private List<Abonnement>abonnements=new ArrayList<>();
     @OneToMany(mappedBy = "utilisateur")
     private List<RoleClub> roleClubs=new ArrayList<>();
-
-
-
 
 }

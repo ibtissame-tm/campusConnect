@@ -1,5 +1,6 @@
 package ma.ensam.campusconnect.entities;
 import lombok.*;
+import ma.ensam.campusconnect.enums.TypePublication;
 import ma.ensam.campusconnect.enums.Visibilite;
 import jakarta.persistence.*;
 import java.time.LocalDateTime;
@@ -21,6 +22,9 @@ public class Publication {
     private Visibilite  visibilite;
     private LocalDateTime dateCreation;
     private LocalDateTime dateModification;
+    @Enumerated(EnumType.STRING)
+    private TypePublication typePublication;
+
     @PrePersist
     public void prePersist() {
         dateCreation = LocalDateTime.now();
