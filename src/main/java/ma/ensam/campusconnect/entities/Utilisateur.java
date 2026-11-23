@@ -19,15 +19,17 @@ public class Utilisateur {
     private Long id;
     private String nom;
     private String prenom;
+    @Column(unique = true, nullable = false)
     private String email;
     private String motDePasse;
     private String photoUrl;
     @Enumerated(EnumType.STRING)
-    private RoleGlobal rolGlobal;
+    private RoleGlobal roleGlobal;
     private boolean active;
     private LocalDateTime dateCreation;
     @PrePersist
     public void prePersist() {
+
         dateCreation = LocalDateTime.now();
     }
     @OneToMany (mappedBy = "auteur")
@@ -38,8 +40,5 @@ public class Utilisateur {
     private List<Abonnement>abonnements=new ArrayList<>();
     @OneToMany(mappedBy = "utilisateur")
     private List<RoleClub> roleClubs=new ArrayList<>();
-
-
-
 
 }

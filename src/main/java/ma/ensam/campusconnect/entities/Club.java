@@ -20,9 +20,14 @@ public class Club {
     private String couvertureUrl;
     private boolean active;
     private LocalDateTime dateCreation;
+    private LocalDateTime dateModification;
     @PrePersist
     public void prePersist() {
         dateCreation = LocalDateTime.now();
+    }
+    @PreUpdate
+    public void preUpdate() {
+        dateModification = LocalDateTime.now();
     }
     @OneToMany(mappedBy = "club")
     private List<Publication> publications;

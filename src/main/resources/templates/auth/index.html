@@ -1,0 +1,16 @@
+<!DOCTYPE html>
+<html lang="fr" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Accueil · CampusConnect</title>
+</head>
+<body>
+<h1>Bienvenue sur CampusConnect</h1>
+<p>Connecté en tant que <strong th:text="${email}">email</strong></p>
+
+<form th:action="@{/logout}" method="post">
+    <button type="submit">Se déconnecter</button>
+</form>
+</body>
+</html>
