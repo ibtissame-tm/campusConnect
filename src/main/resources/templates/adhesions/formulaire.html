@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="fr" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Ajouter une adhésion</title>
+</head>
+<body>
+
+<h1>Ajouter une adhésion</h1>
+
+<form th:action="@{/adhesions/ajouter}"
+      th:object="${adhesion}"
+      method="post">
+
+    <label>Statut :</label>
+
+    <select th:field="*{statut}">
+        <option value="EN_ATTENTE">En attente</option>
+        <option value="ACTIVE">Active</option>
+        <option value="INACTIVE">Inactive</option>
+    </select>
+
+    <br><br>
+
+    <button type="submit">Enregistrer</button>
+
+</form>
+
+<a th:href="@{/adhesions}">Retour à la liste</a>
+
+</body>
+</html>
