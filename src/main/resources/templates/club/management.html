@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<!--
+  Emplacement : src/main/resources/templates/club/management.html
+  Controller  : @GetMapping("/club-management")  (paramètre facultatif ?club=id si l'étudiant gère plusieurs clubs)
+  Accès       : étudiants ayant le rôle RESPONSABLE_MEDIA et/ou RESPONSABLE_ADHESION dans un club où ils sont membres ACTIFS.
+  POST        : /club-management/requests/{id}/accept | /refuse               (RESPONSABLE_ADHESION)
+                /club-management/posts  (multipart)                           (RESPONSABLE_MEDIA)
+                /club-management/posts/{id}/visibility | /delete              (RESPONSABLE_MEDIA)
+  Modèle (en plus des attributs communs) :
+    managedClubs           : liste [{id, nom}] des clubs gérés (un sélecteur s'affiche s'il y en a plusieurs)
+    club                   : id, nom, initiales, colorIndex, followersCount, membersCount, pendingCount, postsCount
+    roleLabel              : "Responsable média" | "Responsable adhésions" | "Responsable média et adhésions"
+    canManageMemberships   : true si RESPONSABLE_ADHESION
+    canManagePosts         : true si RESPONSABLE_MEDIA
+    requests               : id, nom, initiales, filiere, annee, dateDemande          (demandes EN_ATTENTE)
+    members                : nom, initiales, filiere, statut (ACTIVE|INACTIVE|EN_ATTENTE), role (null|RESPONSABLE_*), depuis
+    clubPosts              : id, titre, type, visibilite, datePublication, likesCount, commentsCount
+  IMPORTANT : vérifie aussi les rôles côté Java (Service / @PreAuthorize) : th:if ne fait que masquer l'interface.
+-->
+<html lang="fr" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Gestion du club')}"></head>
+<body>
+<svg th:replace="~{fragments/layout :: sprite}"></svg>
+
+<div class="app">
+  <aside th:replace="~{fragments/layout :: sidebar('management')}"></aside>
+
+  <div class="main">
+    <header th:replace="~{fragments/layout :: topbar}"></header>
+
+    <main class="content">
+      <div class="page-head reveal">
+        <div style="display:flex;gap:16px;align-items:center">
+          <span class="club-logo c1" th:class="'club-logo c' + ${club.colorIndex}" style="width:54px;height:54px;border-radius:16px" th:text="${club.initiales}">AI</span>
+          <div><h1 th:text="'Gestion · ' + ${club.nom}">Gestion · AI &amp; Data Club</h1><p>Espace réservé aux responsables du club.</p></div>
+        </div>
+        <form th:if="${#lists.size(managedClubs) > 1}" th:action="@{/club-management}" action="#" method="get">
+          <select class="input" name="club" onchange="this.form.submit()" aria-label="Choisir un club">
+            <option th:each="c : ${managedClubs}" th:value="${c.id}" th:text="${c.nom}" th:selected="${c.id == club.id}">AI &amp; Data Club</option>
+          </select>
+        </form>
+      </div>
+
+      <div class="alert alert-info reveal">
+        <svg class="icon"><use href="#i-shield"/></svg>
+        <span>Votre rôle : <b th:text="${roleLabel}">Responsable média et adhésions</b>. Les actions disponibles dépendent de ce rôle.</span>
+      </div>
+
+      <section class="stats-4 reveal">
+        <div class="card stat"><span class="stat-ico"><svg class="icon"><use href="#i-heart"/></svg></span><div><strong th:text="${club.followersCount}">538</strong><span>Abonnés</span></div></div>
+        <div class="card stat"><span class="stat-ico"><svg class="icon"><use href="#i-users"/></svg></span><div><strong th:text="${club.membersCount}">52</strong><span>Membres actifs</span></div></div>
+        <div class="card stat"><span class="stat-ico"><svg class="icon"><use href="#i-clock"/></svg></span><div><strong th:text="${club.pendingCount}">3</strong><span>Demandes en attente</span></div></div>
+        <div class="card stat"><span class="stat-ico"><svg class="icon"><use href="#i-message"/></svg></span><div><strong th:text="${club.postsCount}">24</strong><span>Publications</span></div></div>
+      </section>
+
+      <div class="tabs reveal" role="tablist" style="justify-self:start">
+        <button type="button" class="tab active" data-tab="requests" data-tab-group="mgmt" th:if="${canManageMemberships}">Demandes d'adhésion</button>
+        <button type="button" class="tab" data-tab="members" data-tab-group="mgmt" th:classappend="${!canManageMemberships} ? 'active'">Membres</button>
+        <button type="button" class="tab" data-tab="posts" data-tab-group="mgmt" th:if="${canManagePosts}">Publications</button>
+      </div>
+
+      <!-- ===== Demandes d'adhésion : RESPONSABLE_ADHESION ===== -->
+      <section class="card tab-panel active" data-panel="requests" data-tab-group="mgmt" th:if="${canManageMemberships}">
+        <div class="table-head"><h3>Demandes en attente</h3><span class="badge badge-pending" th:text="${club.pendingCount} + ' en attente'">3 en attente</span></div>
+        <p class="empty" th:if="${#lists.isEmpty(requests)}">Aucune demande en attente.</p>
+        <div class="table-wrap">
+          <table class="table">
+            <thead><tr><th>Étudiant</th><th>Filière</th><th>Demande</th><th></th></tr></thead>
+            <tbody>
+              <tr th:each="r : ${requests}">
+                <td><div class="person"><span class="avatar avatar-sm" th:text="${r.initiales}">HR</span><div><strong th:text="${r.nom}">Hamza Raji</strong></div></div></td>
+                <td><span th:text="${r.filiere}">Génie industriel</span> · <span th:text="${r.annee}">1ère année</span></td>
+                <td th:text="${r.dateDemande}">Il y a 2 h</td>
+                <td><div class="row-actions">
+                  <form th:action="@{/club-management/requests/{id}/refuse(id=${r.id})}" action="#" method="post"><button class="btn btn-sm btn-danger-soft" type="submit">Refuser</button></form>
+                  <form th:action="@{/club-management/requests/{id}/accept(id=${r.id})}" action="#" method="post"><button class="btn btn-sm btn-primary" type="submit">Accepter</button></form>
+                </div></td>
+              </tr>
+              <tr th:remove="all"><td><div class="person"><span class="avatar avatar-sm">LM</span><div><strong>Lina Mouline</strong></div></div></td><td>IA &amp; Informatique · 1ère année</td><td>Hier</td>
+                <td><div class="row-actions"><button class="btn btn-sm btn-danger-soft" type="button">Refuser</button><button class="btn btn-sm btn-primary" type="button">Accepter</button></div></td></tr>
+              <tr th:remove="all"><td><div class="person"><span class="avatar avatar-sm">OT</span><div><strong>Omar Tazi</strong></div></div></td><td>Génie mécanique · 2ème année</td><td>Il y a 2 jours</td>
+                <td><div class="row-actions"><button class="btn btn-sm btn-danger-soft" type="button">Refuser</button><button class="btn btn-sm btn-primary" type="button">Accepter</button></div></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- ===== Liste des membres ===== -->
+      <section class="card tab-panel" data-panel="members" data-tab-group="mgmt" th:classappend="${!canManageMemberships} ? 'active'">
+        <div class="table-head"><h3>Membres du club</h3></div>
+        <div class="table-wrap">
+          <table class="table">
+            <thead><tr><th>Étudiant</th><th>Filière</th><th>Statut</th><th>Rôle</th><th>Depuis</th></tr></thead>
+            <tbody>
+              <tr th:each="m : ${members}">
+                <td><div class="person"><span class="avatar avatar-sm" th:text="${m.initiales}">YK</span><div><strong th:text="${m.nom}">Youssef Kabbaj</strong></div></div></td>
+                <td th:text="${m.filiere}">IA &amp; Informatique</td>
+                <td><span class="badge badge-active" th:class="'badge ' + (${m.statut == 'ACTIVE'} ? 'badge-active' : (${m.statut == 'EN_ATTENTE'} ? 'badge-pending' : 'badge-inactive'))"
+                          th:text="${m.statut == 'ACTIVE'} ? 'Active' : (${m.statut == 'EN_ATTENTE'} ? 'En attente' : 'Inactive')">Active</span></td>
+                <td><span class="badge badge-role" th:if="${m.role != null}" th:text="${m.role == 'RESPONSABLE_MEDIA'} ? 'Responsable média' : 'Responsable adhésions'">Responsable média</span>
+                    <span th:unless="${m.role != null}" style="color:var(--muted)">Membre</span></td>
+                <td th:text="${m.depuis}">Sept. 2026</td>
+              </tr>
+              <tr th:remove="all"><td><div class="person"><span class="avatar avatar-sm">SB</span><div><strong>Salma Benali</strong></div></div></td><td>IA &amp; Informatique</td><td><span class="badge badge-active">Active</span></td><td><span class="badge badge-role">Responsable adhésions</span></td><td>Sept. 2026</td></tr>
+              <tr th:remove="all"><td><div class="person"><span class="avatar avatar-sm">IE</span><div><strong>Ibtissame El-Jezzar</strong></div></div></td><td>Génie industriel</td><td><span class="badge badge-active">Active</span></td><td><span style="color:var(--muted)">Membre</span></td><td>Oct. 2026</td></tr>
+              <tr th:remove="all"><td><div class="person"><span class="avatar avatar-sm">AB</span><div><strong>Aya Bellous</strong></div></div></td><td>Génie mécanique</td><td><span class="badge badge-inactive">Inactive</span></td><td><span style="color:var(--muted)">Membre</span></td><td>Juin 2026</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- ===== Publications officielles : RESPONSABLE_MEDIA ===== -->
+      <section class="tab-panel" data-panel="posts" data-tab-group="mgmt" th:if="${canManagePosts}">
+        <div class="layout-2" style="align-items:start">
+          <div class="card compose">
+            <h3>Nouvelle publication officielle</h3>
+            <form class="form-stack" style="margin-top:0" th:action="@{/club-management/posts}" action="#" method="post" enctype="multipart/form-data">
+              <input type="hidden" name="clubId" th:value="${club.id}" value="1">
+              <div class="field"><label for="titre">Titre</label><input class="input" id="titre" name="titre" maxlength="120" required placeholder="Ex. Résultats du hackathon"></div>
+              <div class="field"><label for="contenu">Contenu</label><textarea class="input" id="contenu" name="contenu" required placeholder="Écrivez votre publication…"></textarea></div>
+              <div class="grid-2">
+                <div class="field"><label>Type</label>
+                  <div class="radio-cards">
+                    <div class="radio-card"><input type="radio" id="t1" name="type" value="ACTUALITE" checked><label for="t1">Actualité</label></div>
+                    <div class="radio-card"><input type="radio" id="t2" name="type" value="COMPETITION"><label for="t2">Compétition</label></div>
+                  </div></div>
+                <div class="field"><label>Visibilité</label>
+                  <div class="radio-cards">
+                    <div class="radio-card"><input type="radio" id="v1" name="visibilite" value="PUBLIQUE" checked><label for="v1"><svg class="icon icon-sm"><use href="#i-globe"/></svg> Publique</label></div>
+                    <div class="radio-card"><input type="radio" id="v2" name="visibilite" value="PRIVEE"><label for="v2"><svg class="icon icon-sm"><use href="#i-lock"/></svg> Membres</label></div>
+                  </div></div>
+              </div>
+              <div class="field"><label for="image">Image (facultatif)</label><input class="input" id="image" name="image" type="file" accept="image/*"></div>
+              <div class="form-actions" style="margin-top:0"><button class="btn btn-primary" type="submit">Publier</button></div>
+            </form>
+          </div>
+          <aside class="side">
+            <section class="card card-pad"><div class="card-title"><h3>Visibilité</h3></div>
+              <p class="hint"><b>Publique</b> : visible par tous les étudiants connectés.<br><b>Membres</b> : visible uniquement par les membres actifs du club.</p></section>
+          </aside>
+        </div>
+
+        <div class="card" style="margin-top:20px">
+          <div class="table-head"><h3>Publications du club</h3></div>
+          <div class="table-wrap">
+            <table class="table">
+              <thead><tr><th>Publication</th><th>Type</th><th>Visibilité</th><th>Interactions</th><th></th></tr></thead>
+              <tbody>
+                <tr th:each="p : ${clubPosts}">
+                  <td><strong th:text="${p.titre}">Data Challenge : lancement</strong><br><span class="hint" th:text="${p.datePublication}">Il y a 2 h</span></td>
+                  <td><span class="badge badge-comp" th:class="'badge ' + (${p.type == 'COMPETITION'} ? 'badge-comp' : 'badge-news')" th:text="${p.type == 'COMPETITION'} ? 'Compétition' : 'Actualité'">Compétition</span></td>
+                  <td><span class="badge badge-public" th:class="'badge ' + (${p.visibilite == 'PRIVEE'} ? 'badge-private' : 'badge-public')" th:text="${p.visibilite == 'PRIVEE'} ? 'Membres' : 'Publique'">Publique</span></td>
+                  <td>♥ <span th:text="${p.likesCount}">48</span> · 💬 <span th:text="${p.commentsCount}">12</span></td>
+                  <td><div class="row-actions">
+                    <form th:action="@{/club-management/posts/{id}/visibility(id=${p.id})}" action="#" method="post"><button class="btn btn-sm btn-outline" type="submit">Changer la visibilité</button></form>
+                    <form th:action="@{/club-management/posts/{id}/delete(id=${p.id})}" action="#" method="post" onsubmit="return confirm('Supprimer cette publication ?')"><button class="btn btn-sm btn-danger-soft" type="submit">Supprimer</button></form>
+                  </div></td>
+                </tr>
+                <tr th:remove="all"><td><strong>Retour sur l'atelier Arduino</strong><br><span class="hint">Hier</span></td><td><span class="badge badge-news">Actualité</span></td><td><span class="badge badge-private">Membres</span></td><td>♥ 21 · 💬 1</td>
+                  <td><div class="row-actions"><button class="btn btn-sm btn-outline" type="button">Changer la visibilité</button><button class="btn btn-sm btn-danger-soft" type="button">Supprimer</button></div></td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
+</div>
+
+<th:block th:replace="~{fragments/layout :: scripts}"></th:block>
+</body>
+</html>

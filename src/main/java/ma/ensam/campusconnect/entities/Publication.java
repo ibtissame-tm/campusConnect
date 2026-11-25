@@ -9,15 +9,14 @@ import java.time.LocalDateTime;
 @AllArgsConstructor
 @Getter
 @Setter
-
-
-
 public class Publication {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
+    private String titre;
     private String contenu;
     private String imageUrl;
+    private boolean masquee;
     @Enumerated(EnumType.STRING)
     private Visibilite  visibilite;
     private LocalDateTime dateCreation;

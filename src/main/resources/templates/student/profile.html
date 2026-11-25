@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<!--
+  Emplacement : src/main/resources/templates/student/profile.html
+  Controller  : @GetMapping("/profile")
+  Modèle (en plus des attributs communs) :
+    profile       : prenom, nom, initiales, email, filiere, annee, photoUrl (facultatif),
+                    followingCount, membershipCount, interactionCount
+    roleLabels    : liste de textes, ex. "Responsable média · AI & Data Club" (vide si aucun rôle)
+    followedClubs : id, nom, initiales, logoUrl, colorIndex, followersCount
+    memberships   : club{id, nom, initiales, colorIndex}, statut (EN_ATTENTE|ACTIVE|INACTIVE), role (null|RESPONSABLE_MEDIA|RESPONSABLE_ADHESION)
+    interactions  : type (LIKE|COMMENT), texte, postTitre, clubNom, date
+-->
+<html lang="fr" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('My Profile')}"></head>
+<body>
+<svg th:replace="~{fragments/layout :: sprite}"></svg>
+
+<div class="app">
+  <aside th:replace="~{fragments/layout :: sidebar('profile')}"></aside>
+
+  <div class="main">
+    <header th:replace="~{fragments/layout :: topbar}"></header>
+
+    <main class="content">
+
+      <section class="card profile-head reveal">
+        <div class="cover"></div>
+        <div class="row">
+          <span class="avatar avatar-xl" th:unless="${profile.photoUrl}" th:text="${profile.initiales}">AS</span>
+          <img class="avatar avatar-xl" th:if="${profile.photoUrl}" th:src="${profile.photoUrl}" th:alt="${profile.prenom}" style="object-fit:cover">
+          <div class="info">
+            <h1 th:text="${profile.prenom + ' ' + profile.nom}">Aya Smali</h1>
+            <p>Étudiant ENSAM Casablanca</p>
+            <p th:text="${profile.email}">identifiant@ensam</p>
+            <div class="chip-row" th:if="${!#lists.isEmpty(roleLabels)}">
+              <span class="badge badge-role" th:each="r : ${roleLabels}" th:text="${r}">Responsable média · AI &amp; Data Club</span>
+            </div>
+          </div>
+          <a class="btn btn-outline" th:href="@{/settings}" href="#"><svg class="icon icon-sm"><use href="#i-settings"/></svg> Modifier</a>
+        </div>
+      </section>
+
+      <section class="stats reveal">
+        <div class="card stat"><span class="stat-ico"><svg class="icon"><use href="#i-heart"/></svg></span>
+          <div><strong th:text="${profile.followingCount}">6</strong><span>Clubs suivis</span></div></div>
+        <div class="card stat"><span class="stat-ico"><svg class="icon"><use href="#i-users"/></svg></span>
+          <div><strong th:text="${profile.membershipCount}">3</strong><span>Adhésions</span></div></div>
+        <div class="card stat"><span class="stat-ico"><svg class="icon"><use href="#i-message"/></svg></span>
+          <div><strong th:text="${profile.interactionCount}">18</strong><span>Interactions</span></div></div>
+      </section>
+
+      <div class="tabs reveal" role="tablist" style="justify-self:start">
+        <button type="button" class="tab active" data-tab="following" data-tab-group="profile">Clubs suivis</button>
+        <button type="button" class="tab" data-tab="member" data-tab-group="profile">Mes adhésions</button>
+        <button type="button" class="tab" data-tab="activity" data-tab-group="profile">Mes interactions</button>
+      </div>
+
+      <!-- Clubs suivis (abonnements : indépendants des adhésions) -->
+      <section class="tab-panel active" data-panel="following" data-tab-group="profile">
+        <p class="empty card card-pad" th:if="${#lists.isEmpty(followedClubs)}">Vous ne suivez aucun club.</p>
+        <div class="grid-2">
+          <a class="mini-club" th:each="club : ${followedClubs}" th:href="@{/clubs/{id}(id=${club.id})}" href="#">
+            <span class="club-logo c1" th:class="'club-logo c' + ${club.colorIndex}" th:text="${club.initiales}">AI</span>
+            <div class="grow"><strong th:text="${club.nom}">AI &amp; Data Club</strong><span class="sub"><span th:text="${club.followersCount}">538</span> abonnés</span></div>
+          </a>
+          <a class="mini-club" th:remove="all" href="#"><span class="club-logo c4">OD</span><div class="grow"><strong>Open Source &amp; Dev</strong><span class="sub">364 abonnés</span></div></a>
+          <a class="mini-club" th:remove="all" href="#"><span class="club-logo c0">RA</span><div class="grow"><strong>Robotics &amp; Automation</strong><span class="sub">412 abonnés</span></div></a>
+          <a class="mini-club" th:remove="all" href="#"><span class="club-logo c2">EN</span><div class="grow"><strong>Entrepreneuriat ENSAM</strong><span class="sub">297 abonnés</span></div></a>
+        </div>
+      </section>
+
+      <!-- Adhésions et rôles -->
+      <section class="tab-panel" data-panel="member" data-tab-group="profile">
+        <p class="empty card card-pad" th:if="${#lists.isEmpty(memberships)}">Aucune adhésion pour le moment.</p>
+        <div class="card card-pad">
+          <div class="summary-item" th:each="m : ${memberships}">
+            <span class="club-logo c1" th:class="'club-logo c' + ${m.club.colorIndex}" style="width:42px;height:42px;font-size:14px" th:text="${m.club.initiales}">AI</span>
+            <div class="grow">
+              <strong th:text="${m.club.nom}">AI &amp; Data Club</strong>
+              <span class="sub" th:if="${m.role != null}" th:text="${m.role == 'RESPONSABLE_MEDIA'} ? 'Responsable média' : 'Responsable adhésions'">Responsable média</span>
+            </div>
+            <span class="badge badge-active" th:class="'badge ' + (${m.statut == 'ACTIVE'} ? 'badge-active' : (${m.statut == 'EN_ATTENTE'} ? 'badge-pending' : 'badge-inactive'))"
+                  th:text="${m.statut == 'ACTIVE'} ? 'Active' : (${m.statut == 'EN_ATTENTE'} ? 'En attente' : 'Inactive')">Active</span>
+          </div>
+          <div class="summary-item" th:remove="all"><span class="club-logo c0" style="width:42px;height:42px;font-size:14px">RA</span><div class="grow"><strong>Robotics &amp; Automation</strong></div><span class="badge badge-active">Active</span></div>
+          <div class="summary-item" th:remove="all"><span class="club-logo c2" style="width:42px;height:42px;font-size:14px">EN</span><div class="grow"><strong>Entrepreneuriat ENSAM</strong></div><span class="badge badge-pending">En attente</span></div>
+        </div>
+      </section>
+
+      <!-- Publications et interactions -->
+      <section class="tab-panel" data-panel="activity" data-tab-group="profile">
+        <p class="empty card card-pad" th:if="${#lists.isEmpty(interactions)}">Aucune interaction pour le moment.</p>
+        <div class="card card-pad">
+          <div class="activity" th:each="i : ${interactions}">
+            <span class="notif-ico ni-no" th:class="'notif-ico ' + (${i.type == 'LIKE'} ? 'ni-no' : 'ni-post')" style="width:38px;height:38px;border-radius:12px">
+              <svg class="icon icon-sm"><use th:attr="href=${i.type == 'LIKE'} ? '#i-heart' : '#i-message'" href="#i-heart"/></svg></span>
+            <div class="grow">
+              <p><b th:text="${i.type == 'LIKE'} ? 'Vous avez aimé' : 'Vous avez commenté'">Vous avez aimé</b>
+                 « <span th:text="${i.postTitre}">Data Challenge : phase de qualification</span> » · <span th:text="${i.clubNom}">AI &amp; Data Club</span></p>
+              <p th:if="${i.type == 'COMMENT'}" th:text="${i.texte}" style="color:var(--muted)"></p>
+              <time th:text="${i.date}">Il y a 2 h</time>
+            </div>
+          </div>
+          <div class="activity" th:remove="all"><span class="notif-ico ni-post" style="width:38px;height:38px;border-radius:12px"><svg class="icon icon-sm"><use href="#i-message"/></svg></span>
+            <div class="grow"><p><b>Vous avez commenté</b> « Pitch Night : inscriptions spectateurs » · Entrepreneuriat ENSAM</p><p style="color:var(--muted)">Super initiative, à quelle heure commence la soirée ?</p><time>Hier</time></div></div>
+          <div class="activity" th:remove="all"><span class="notif-ico ni-no" style="width:38px;height:38px;border-radius:12px"><svg class="icon icon-sm"><use href="#i-heart"/></svg></span>
+            <div class="grow"><p><b>Vous avez aimé</b> « Retour sur l'atelier Arduino du jeudi » · Robotics &amp; Automation</p><time>Il y a 2 jours</time></div></div>
+        </div>
+      </section>
+
+    </main>
+  </div>
+</div>
+
+<th:block th:replace="~{fragments/layout :: scripts}"></th:block>
+</body>
+</html>

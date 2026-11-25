@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<!--
+  Emplacement : src/main/resources/templates/student/clubs.html
+  Controller  : @GetMapping("/clubs") — paramètres facultatifs : q, filter (all|following|member), sort (popular|name), page
+  Modèle (en plus des attributs communs : student, unreadCount, isClubManager, isAdmin) :
+    clubs : id, nom, description, initiales, logoUrl, coverUrl, colorIndex, followersCount, membersCount,
+            followedByMe, membershipStatus (null | EN_ATTENTE | ACTIVE | INACTIVE)
+    q, filter, sort, page, totalPages
+  Le bouton "Suivre / Suivi" est indépendant de l'adhésion ; la demande d'adhésion se fait sur la page du club.
+-->
+<html lang="fr" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Explore Clubs')}"></head>
+<body>
+<svg th:replace="~{fragments/layout :: sprite}"></svg>
+
+<div class="app">
+  <aside th:replace="~{fragments/layout :: sidebar('clubs')}"></aside>
+
+  <div class="main">
+    <header th:replace="~{fragments/layout :: topbar}"></header>
+
+    <main class="content">
+      <div class="page-head reveal">
+        <div><h1>Explore Clubs</h1><p>Trouvez les clubs de l'ENSAM qui vous ressemblent.</p></div>
+      </div>
+
+      <!-- Recherche + filtres : simple formulaire GET traité par le Controller -->
+      <form class="toolbar reveal" th:action="@{/clubs}" action="#" method="get">
+        <input type="hidden" name="filter" th:value="${filter}" value="all">
+        <div class="search">
+          <svg class="icon"><use href="#i-search"/></svg>
+          <input class="input" type="search" name="q" th:value="${q}" placeholder="Rechercher un club…" aria-label="Rechercher un club">
+        </div>
+        <div class="chips" role="group" aria-label="Filtrer">
+          <a class="chip active" th:href="@{/clubs(filter='all',q=${q},sort=${sort})}" th:classappend="${filter == 'all'} ? 'active'" href="#">Tous</a>
+          <a class="chip" th:href="@{/clubs(filter='following',q=${q},sort=${sort})}" th:classappend="${filter == 'following'} ? 'active'" href="#">Que je suis</a>
+          <a class="chip" th:href="@{/clubs(filter='member',q=${q},sort=${sort})}" th:classappend="${filter == 'member'} ? 'active'" href="#">Dont je suis membre</a>
+        </div>
+        <select class="input" name="sort" aria-label="Trier" onchange="this.form.submit()">
+          <option value="popular" th:selected="${sort == 'popular'}">Plus populaires</option>
+          <option value="name" th:selected="${sort == 'name'}">Ordre alphabétique</option>
+        </select>
+      </form>
+
+      <p class="empty card card-pad" th:if="${#lists.isEmpty(clubs)}">Aucun club ne correspond à votre recherche.</p>
+
+      <section class="club-grid">
+        <!-- Les cartes ci-dessous sont des exemples ; seule la première est répétée par th:each -->
+        <article class="card club-card reveal" th:each="club : ${clubs}">
+
+          <div class="cover cover-pattern post-cover c0"
+               th:class="'cover cover-pattern post-cover c' + ${club.colorIndex}">
+
+            <!-- Couverture déjà enregistrée pour le club -->
+            <img th:if="${club.coverUrl != null and !#strings.isEmpty(club.coverUrl)}"
+                 th:src="${club.coverUrl}"
+                 th:alt="'Couverture ' + ${club.nom}"
+                 style="width:100%;height:100%;object-fit:cover;display:block;">
+
+            <!-- Image locale utilisée si aucune couverture n'est enregistrée -->
+            <img th:unless="${club.coverUrl != null and !#strings.isEmpty(club.coverUrl)}"
+                 th:src="${#strings.containsIgnoreCase(club.nom, 'robot') ? '/images/clubs/robotics/robotics.png' :
+                  (#strings.containsIgnoreCase(club.nom, 'ai') ? '/images/clubs/ai-data/ai-data.png' :
+                  (#strings.containsIgnoreCase(club.nom, 'entrepreneuriat') ? '/images/clubs/entrepreneuriat/entrepreneurship.png' :
+                  (#strings.containsIgnoreCase(club.nom, 'photo') ? '/images/clubs/photo-cinema/photography.png' :
+                  (#strings.containsIgnoreCase(club.nom, 'open source') ? '/images/clubs/open-source/coding.png' :
+                  (#strings.containsIgnoreCase(club.nom, 'sport') ? '/images/clubs/sport/sport.png' :
+                  '/images/campus/student-life.png')))))}"
+                 th:alt="'Illustration de ' + ${club.nom}"
+                 style="width:100%;height:100%;object-fit:cover;display:block;">
+          </div>
+
+          <div class="body">
+            <a th:href="@{/clubs/{id}(id=${club.id})}" href="#" class="club-logo c0" th:class="'club-logo c' + ${club.colorIndex}">
+              <img th:if="${club.logoUrl}" th:src="${club.logoUrl}" th:alt="${club.nom}" style="width:100%;height:100%;border-radius:15px;object-fit:cover">
+              <span th:unless="${club.logoUrl}" th:text="${club.initiales}">RA</span>
+            </a>
+            <h3><a th:href="@{/clubs/{id}(id=${club.id})}" href="#" th:text="${club.nom}">Robotics &amp; Automation</a></h3>
+            <p class="desc" th:text="${club.description}">Conception de robots, ateliers d'électronique embarquée et participation à des concours de robotique.</p>
+            <div class="meta">
+              <span><svg class="icon icon-sm"><use href="#i-heart"/></svg> <b th:text="${club.followersCount}">412</b> abonnés</span>
+              <span><svg class="icon icon-sm"><use href="#i-users"/></svg> <b th:text="${club.membersCount}">38</b> membres</span>
+              <span class="badge badge-active" th:if="${club.membershipStatus == 'ACTIVE'}">Membre</span>
+              <span class="badge badge-pending" th:if="${club.membershipStatus == 'EN_ATTENTE'}">En attente</span>
+            </div>
+            <div class="actions">
+              <form th:action="${club.followedByMe} ? @{/clubs/{id}/unfollow(id=${club.id})} : @{/clubs/{id}/follow(id=${club.id})}" action="#" method="post" data-follow>
+                <button type="submit" class="btn btn-sm btn-soft" th:classappend="${club.followedByMe} ? 'btn-following'"
+                        th:text="${club.followedByMe} ? 'Suivi' : 'Suivre'">Suivre</button>
+              </form>
+              <a class="btn btn-sm btn-outline" th:href="@{/clubs/{id}(id=${club.id})}" href="#">Voir le club</a>
+            </div>
+          </div>
+        </article>
+
+        <article class="card club-card reveal" th:remove="all">
+          <div class="cover cover-pattern post-cover c1"></div>
+          <div class="body"><a href="#" class="club-logo c1"><span>AI</span></a><h3><a href="#">AI &amp; Data Club</a></h3>
+            <p class="desc">Machine learning, data science et projets d'intelligence artificielle. Workshops, challenges et conférences tout au long de l'année.</p>
+            <div class="meta"><span><svg class="icon icon-sm"><use href="#i-heart"/></svg> <b>538</b> abonnés</span><span><svg class="icon icon-sm"><use href="#i-users"/></svg> <b>52</b> membres</span><span class="badge badge-active">Membre</span></div>
+            <div class="actions"><form action="#" method="post" data-follow><button type="submit" class="btn btn-sm btn-following">Suivi</button></form><a class="btn btn-sm btn-outline" href="#">Voir le club</a></div></div>
+        </article>
+        <article class="card club-card reveal" th:remove="all">
+          <div class="cover cover-pattern post-cover c2"></div>
+          <div class="body"><a href="#" class="club-logo c2"><span>EN</span></a><h3><a href="#">Entrepreneuriat ENSAM</a></h3>
+            <p class="desc">Accompagnement de projets étudiants, rencontres avec des entrepreneurs et organisation de la Pitch Night.</p>
+            <div class="meta"><span><svg class="icon icon-sm"><use href="#i-heart"/></svg> <b>297</b> abonnés</span><span><svg class="icon icon-sm"><use href="#i-users"/></svg> <b>31</b> membres</span><span class="badge badge-pending">En attente</span></div>
+            <div class="actions"><form action="#" method="post" data-follow><button type="submit" class="btn btn-sm btn-soft">Suivre</button></form><a class="btn btn-sm btn-outline" href="#">Voir le club</a></div></div>
+        </article>
+        <article class="card club-card reveal" th:remove="all">
+          <div class="cover cover-pattern post-cover c3"></div>
+          <div class="body"><a href="#" class="club-logo c3"><span>PC</span></a><h3><a href="#">Club Photo &amp; Cinéma</a></h3>
+            <p class="desc">Sorties photo, courts-métrages et projections. Le club couvre aussi les grands moments de la vie de l'école.</p>
+            <div class="meta"><span><svg class="icon icon-sm"><use href="#i-heart"/></svg> <b>221</b> abonnés</span><span><svg class="icon icon-sm"><use href="#i-users"/></svg> <b>24</b> membres</span></div>
+            <div class="actions"><form action="#" method="post" data-follow><button type="submit" class="btn btn-sm btn-soft">Suivre</button></form><a class="btn btn-sm btn-outline" href="#">Voir le club</a></div></div>
+        </article>
+        <article class="card club-card reveal" th:remove="all">
+          <div class="cover cover-pattern post-cover c4"></div>
+          <div class="body"><a href="#" class="club-logo c4"><span>OD</span></a><h3><a href="#">Open Source &amp; Dev</a></h3>
+            <p class="desc">Contributions open source, hackathons internes et ateliers de programmation pour tous les niveaux.</p>
+            <div class="meta"><span><svg class="icon icon-sm"><use href="#i-heart"/></svg> <b>364</b> abonnés</span><span><svg class="icon icon-sm"><use href="#i-users"/></svg> <b>41</b> membres</span></div>
+            <div class="actions"><form action="#" method="post" data-follow><button type="submit" class="btn btn-sm btn-following">Suivi</button></form><a class="btn btn-sm btn-outline" href="#">Voir le club</a></div></div>
+        </article>
+        <article class="card club-card reveal" th:remove="all">
+          <div class="cover cover-pattern post-cover c0"></div>
+          <div class="body"><a href="#" class="club-logo c0"><span>SP</span></a><h3><a href="#">Sport &amp; Bien-être</a></h3>
+            <p class="desc">Tournois inter-écoles, séances d'entraînement collectif et défis sportifs pour toute la promotion.</p>
+            <div class="meta"><span><svg class="icon icon-sm"><use href="#i-heart"/></svg> <b>189</b> abonnés</span><span><svg class="icon icon-sm"><use href="#i-users"/></svg> <b>67</b> membres</span></div>
+            <div class="actions"><form action="#" method="post" data-follow><button type="submit" class="btn btn-sm btn-soft">Suivre</button></form><a class="btn btn-sm btn-outline" href="#">Voir le club</a></div></div>
+        </article>
+      </section>
+
+      <nav class="pagination" th:if="${totalPages != null and totalPages > 1}" aria-label="Pagination">
+        <a class="page" th:each="n : ${#numbers.sequence(1, totalPages)}" th:href="@{/clubs(page=${n},q=${q},filter=${filter},sort=${sort})}"
+           th:classappend="${n == page} ? 'active'" th:text="${n}" href="#">1</a>
+      </nav>
+    </main>
+  </div>
+</div>
+
+<th:block th:replace="~{fragments/layout :: scripts}"></th:block>
+</body>
+</html>

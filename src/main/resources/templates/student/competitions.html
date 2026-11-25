@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<!--
+  Emplacement : src/main/resources/templates/student/competitions.html
+  Controller  : @GetMapping("/competitions") — paramètre facultatif : scope (all|following)
+  Modèle (en plus des attributs communs) :
+    competitions : publications de type COMPETITION déjà filtrées par le Service (visibilité respectée, signalées exclues)
+                   id, titre, contenu, datePublication, visibilite, imageUrl, likesCount, commentsCount,
+                   club{id, nom, initiales, logoUrl, colorIndex}
+    scope        : "all" | "following"
+  Aucun système d'inscription : chaque carte renvoie simplement vers la publication sur la page du club.
+-->
+<html lang="fr" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Competitions')}"></head>
+<body>
+<svg th:replace="~{fragments/layout :: sprite}"></svg>
+
+<div class="app">
+  <aside th:replace="~{fragments/layout :: sidebar('competitions')}"></aside>
+
+  <div class="main">
+    <header th:replace="~{fragments/layout :: topbar}"></header>
+
+    <main class="content">
+      <div class="page-head reveal">
+        <div><h1>Competitions</h1><p>Les compétitions annoncées officiellement par les clubs.</p></div>
+        <nav class="chips" aria-label="Filtrer">
+          <a class="chip active" href="#" th:href="@{/competitions(scope='all')}" th:classappend="${scope == 'all'} ? 'active'">Toutes</a>
+          <a class="chip" href="#" th:href="@{/competitions(scope='following')}" th:classappend="${scope == 'following'} ? 'active'">De mes clubs</a>
+        </nav>
+      </div>
+
+      <p class="empty card card-pad" th:if="${#lists.isEmpty(competitions)}">Aucune compétition annoncée pour le moment.</p>
+
+      <section class="comp-grid">
+        <article class="card comp-card reveal" th:each="comp : ${competitions}">
+          <div class="cover cover-pattern post-cover c1" th:class="'cover cover-pattern post-cover c' + ${comp.club.colorIndex}">
+            <img th:if="${comp.imageUrl}" th:src="${comp.imageUrl}" th:alt="${comp.titre}">
+            <div class="tag">
+              <span class="badge badge-comp" style="background:#fff">Compétition</span>
+              <span class="badge badge-private" th:if="${comp.visibilite == 'PRIVEE'}"><svg class="icon icon-sm"><use href="#i-lock"/></svg> Membres</span>
+            </div>
+            <svg class="icon trophy"><use href="#i-trophy"/></svg>
+          </div>
+          <div class="body">
+            <div class="by">
+              <span class="club-logo c1" th:class="'club-logo c' + ${comp.club.colorIndex}" style="width:28px;height:28px;border-radius:9px;font-size:10px" th:text="${comp.club.initiales}">AI</span>
+              <span th:text="${comp.club.nom}">AI &amp; Data Club</span> · <span th:text="${comp.datePublication}">Il y a 2 h</span>
+            </div>
+            <h3 th:text="${comp.titre}">Data Challenge : phase de qualification</h3>
+            <p th:text="${comp.contenu}">Le challenge de data science de l'école ouvre sa phase de qualification. Datasets, règlement et calendrier sont disponibles sur la page du club.</p>
+          </div>
+          <div class="foot">
+            <div><span><svg class="icon icon-sm"><use href="#i-heart"/></svg> <b th:text="${comp.likesCount}">48</b></span>
+                 <span><svg class="icon icon-sm"><use href="#i-message"/></svg> <b th:text="${comp.commentsCount}">12</b></span></div>
+            <a class="link-more" th:href="${comp.club.id != null} ? (@{/clubs/{id}(id=${comp.club.id})} + '#post-' + ${comp.id}) : @{/competitions}" href="#">Lire la publication →</a>
+          </div>
+        </article>
+
+        <article class="card comp-card reveal" th:remove="all">
+          <div class="cover cover-pattern post-cover c4"><div class="tag"><span class="badge badge-comp" style="background:#fff">Compétition</span></div><svg class="icon trophy"><use href="#i-trophy"/></svg></div>
+          <div class="body"><div class="by"><span class="club-logo c4" style="width:28px;height:28px;border-radius:9px;font-size:10px">OD</span><span>Open Source &amp; Dev</span> · <span>Il y a 4 jours</span></div>
+            <h3>Hackathon interne : résultats de la compétition de code</h3>
+            <p>Félicitations à toutes les équipes participantes. Le classement final et les retours du jury sont publiés.</p></div>
+          <div class="foot"><div><span><svg class="icon icon-sm"><use href="#i-heart"/></svg> <b>64</b></span><span><svg class="icon icon-sm"><use href="#i-message"/></svg> <b>1</b></span></div><a class="link-more" href="#">Lire la publication →</a></div>
+        </article>
+        <article class="card comp-card reveal" th:remove="all">
+          <div class="cover cover-pattern post-cover c0"><div class="tag"><span class="badge badge-comp" style="background:#fff">Compétition</span><span class="badge badge-private"><svg class="icon icon-sm"><use href="#i-lock"/></svg> Membres</span></div><svg class="icon trophy"><use href="#i-trophy"/></svg></div>
+          <div class="body"><div class="by"><span class="club-logo c0" style="width:28px;height:28px;border-radius:9px;font-size:10px">RA</span><span>Robotics &amp; Automation</span> · <span>Il y a 6 jours</span></div>
+            <h3>Sélection de l'équipe pour le concours national de robotique</h3>
+            <p>Retour sur les épreuves de sélection internes et présentation des critères retenus par le jury du club.</p></div>
+          <div class="foot"><div><span><svg class="icon icon-sm"><use href="#i-heart"/></svg> <b>29</b></span><span><svg class="icon icon-sm"><use href="#i-message"/></svg> <b>4</b></span></div><a class="link-more" href="#">Lire la publication →</a></div>
+        </article>
+        <article class="card comp-card reveal" th:remove="all">
+          <div class="cover cover-pattern post-cover c3"><div class="tag"><span class="badge badge-comp" style="background:#fff">Compétition</span></div><svg class="icon trophy"><use href="#i-trophy"/></svg></div>
+          <div class="body"><div class="by"><span class="club-logo c3" style="width:28px;height:28px;border-radius:9px;font-size:10px">PC</span><span>Club Photo &amp; Cinéma</span> · <span>Il y a 1 semaine</span></div>
+            <h3>Concours photo : thème « Vie de campus »</h3>
+            <p>Le club annonce son concours annuel. Le règlement et les critères d'évaluation sont détaillés dans la publication.</p></div>
+          <div class="foot"><div><span><svg class="icon icon-sm"><use href="#i-heart"/></svg> <b>72</b></span><span><svg class="icon icon-sm"><use href="#i-message"/></svg> <b>9</b></span></div><a class="link-more" href="#">Lire la publication →</a></div>
+        </article>
+      </section>
+    </main>
+  </div>
+</div>
+
+<th:block th:replace="~{fragments/layout :: scripts}"></th:block>
+</body>
+</html>

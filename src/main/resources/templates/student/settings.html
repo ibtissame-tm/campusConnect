@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<!--
+  Emplacement : src/main/resources/templates/student/settings.html
+  Controller  : @GetMapping("/settings") et @PostMapping("/settings/password")
+  Modèle : attributs communs (student) + success / error (messages flash facultatifs)
+-->
+<html lang="fr" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Settings')}"></head>
+<body>
+<svg th:replace="~{fragments/layout :: sprite}"></svg>
+
+<div class="app">
+  <aside th:replace="~{fragments/layout :: sidebar('settings')}"></aside>
+
+  <div class="main">
+    <header th:replace="~{fragments/layout :: topbar}"></header>
+
+    <main class="content">
+      <div class="page-head reveal"><div><h1>Settings</h1><p>Consultez votre profil et gérez votre mot de passe.</p></div></div>
+
+      <div class="alert alert-success" role="status" th:if="${success}" th:text="${success}">Modifications enregistrées.</div>
+      <div class="alert alert-error" role="alert" th:if="${error}" th:text="${error}">Une erreur est survenue.</div>
+
+      <div class="settings-layout">
+        <nav class="card settings-nav reveal" aria-label="Sections">
+          <button type="button" class="active" data-tab="profil" data-tab-group="settings"><svg class="icon"><use href="#i-user"/></svg> Profil</button>
+          <button type="button" data-tab="password" data-tab-group="settings"><svg class="icon"><use href="#i-lock"/></svg> Mot de passe</button>
+        </nav>
+
+        <div>
+          <!-- ===== Profil (lecture seule) ===== -->
+          <section class="card settings-card tab-panel active" data-panel="profil" data-tab-group="settings">
+            <h2>Profil</h2><p class="sub">Vos informations personnelles.</p>
+            <div class="avatar-upload" style="margin-bottom:22px">
+              <span class="avatar avatar-lg" th:text="${student.initiales}">AS</span>
+            </div>
+            <div class="form-grid">
+              <div class="field"><label for="prenom">Prénom</label><input class="input" id="prenom" th:value="${student.prenom}" value="Aya" readonly></div>
+              <div class="field"><label for="nom">Nom</label><input class="input" id="nom" th:value="${student.nom}" value="Smali" readonly></div>
+              <div class="field col-span"><label for="email">Compte ENSAM</label><input class="input" id="email" th:value="${student.email}" value="identifiant@ensam" readonly>
+                <span class="hint">Ces informations sont gérées par l'administration.</span></div>
+            </div>
+          </section>
+
+          <!-- ===== Mot de passe ===== -->
+          <section class="card settings-card tab-panel" data-panel="password" data-tab-group="settings">
+            <h2>Mot de passe</h2><p class="sub">Choisissez un mot de passe robuste que vous n'utilisez nulle part ailleurs.</p>
+            <form class="form-stack" style="margin-top:0;max-width:460px" th:action="@{/settings/password}" action="#" method="post">
+              <div class="field"><label for="current">Mot de passe actuel</label>
+                <input class="input" id="current" name="motDePasseActuel" type="password" autocomplete="current-password" required></div>
+              <div class="field"><label for="new">Nouveau mot de passe</label>
+                <input class="input" id="new" name="nouveauMotDePasse" type="password" autocomplete="new-password" minlength="8" data-strength required>
+                <div class="strength" aria-hidden="true"><i></i></div>
+                <span class="hint">8 caractères minimum, avec majuscule, chiffre et symbole pour un niveau maximal.</span></div>
+              <div class="field"><label for="confirm">Confirmer le mot de passe</label>
+                <input class="input" id="confirm" name="confirmation" type="password" autocomplete="new-password" data-confirm required></div>
+              <div class="form-actions" style="margin-top:6px"><button type="submit" class="btn btn-primary">Modifier le mot de passe</button></div>
+            </form>
+          </section>
+        </div>
+      </div>
+    </main>
+  </div>
+</div>
+
+<th:block th:replace="~{fragments/layout :: scripts}"></th:block>
+</body>
+</html>

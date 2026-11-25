@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<!--
+  Emplacement : src/main/resources/templates/auth/landing.html
+  Controller  : @GetMapping("/") public String landing(Model m) { m.addAttribute("clubs", ...4 clubs...); return "auth/landing"; }
+  (autoriser "/" dans Spring Security : .requestMatchers("/", "/login", "/css/**", "/js/**").permitAll())
+  Modèle : clubs (4 à 8 clubs : id, nom, initiales, logoUrl, colorIndex, followersCount) ;
+           stats facultatif : clubsCount, studentsCount
+-->
+<html lang="fr" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Bienvenue')}"></head>
+<body>
+<svg th:replace="~{fragments/layout :: sprite}"></svg>
+
+<header class="pub-nav">
+  <a class="brand" th:href="@{/}" href="#">
+    <span class="brand-mark"><svg class="icon"><use href="#i-cap"/></svg></span>
+    <span class="brand-name">CampusConnect<small>ENSAM Casablanca</small></span>
+  </a>
+  <nav class="pub-links" aria-label="Sections">
+    <a href="#features">Fonctionnalités</a>
+    <a href="#how">Comment ça marche</a>
+    <a href="#clubs">Clubs</a>
+  </nav>
+  <a class="btn btn-primary" th:href="@{/login}" href="#">Se connecter</a>
+</header>
+
+<main>
+  <section class="l-hero">
+    <div class="reveal">
+      <span class="badge badge-news" style="margin-bottom:18px">
+        <svg class="icon icon-sm"><use href="#i-cap"/></svg> Réservé aux étudiants de l'ENSAM</span>
+      <h1>Toute la vie des clubs, <span class="grad-text">enfin connectée.</span></h1>
+      <p class="lead">CampusConnect rassemble les clubs de l'ENSAM Casablanca : découvrez-les, suivez leurs actualités, rejoignez-les et réagissez à leurs publications officielles.</p>
+      <div class="cta">
+        <a class="btn btn-primary btn-lg" th:href="@{/login}" href="#">Accéder à la plateforme</a>
+        <a class="btn btn-outline btn-lg" href="#features">Découvrir</a>
+      </div>
+    </div>
+
+    <!-- Aperçu d'interface (illustratif, sans données réelles) -->
+    <div class="l-mock reveal" aria-hidden="true">
+      <div class="glow"></div>
+      <div class="card m1">
+        <div class="post-head" style="padding:0 0 10px">
+          <span class="club-logo c1" style="width:38px;height:38px;border-radius:12px;font-size:13px">AI</span>
+          <div class="post-meta"><strong style="font-size:14px">AI &amp; Data Club</strong><span>Il y a 2 h</span></div>
+          <span class="badge badge-comp" style="margin-left:auto">Compétition</span>
+        </div>
+        <h4 style="font-size:15px;margin-bottom:10px">Data Challenge : phase de qualification</h4>
+        <div style="height:78px;border-radius:12px" class="c1 cover-pattern post-cover"></div>
+        <div style="display:flex;gap:14px;margin-top:12px;color:var(--muted);font-size:13px;font-weight:600">
+          <span style="color:var(--danger)">♥ 48</span><span>💬 12</span></div>
+      </div>
+      <div class="card m2">
+        <div class="club-row" style="padding:0">
+          <span class="club-logo c0" style="width:42px;height:42px;font-size:14px">RA</span>
+          <div class="grow"><strong>Robotics &amp; Automation</strong><span style="font-size:12.5px;color:var(--muted)">412 abonnés</span></div>
+          <span class="btn btn-soft btn-sm">Suivre</span>
+        </div>
+      </div>
+      <div class="card m3">
+        <div class="notif" style="padding:0;border:0;background:none;box-shadow:none">
+          <span class="notif-ico ni-ok"><svg class="icon"><use href="#i-check"/></svg></span>
+          <div class="grow"><strong>Adhésion acceptée</strong><p>Bienvenue dans le club !</p></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="section" id="features">
+    <div class="section-head">
+      <div class="eyebrow">Fonctionnalités</div>
+      <h2>Tout ce qu'il faut pour vivre votre campus</h2>
+      <p>Une plateforme simple, pensée pour les étudiants et les responsables de clubs.</p>
+    </div>
+    <div class="features">
+      <article class="card feature"><span class="stat-ico"><svg class="icon"><use href="#i-compass"/></svg></span>
+        <h3>Découvrir les clubs</h3><p>Parcourez tous les clubs de l'école avec leur description, leur logo et leurs publications.</p></article>
+      <article class="card feature"><span class="stat-ico"><svg class="icon"><use href="#i-heart"/></svg></span>
+        <h3>Suivre librement</h3><p>Suivez autant de clubs que vous voulez, sans en être membre, et désabonnez-vous à tout moment.</p></article>
+      <article class="card feature"><span class="stat-ico"><svg class="icon"><use href="#i-check"/></svg></span>
+        <h3>Rejoindre un club</h3><p>Envoyez une demande d'adhésion et suivez son statut jusqu'à la validation par le club.</p></article>
+      <article class="card feature"><span class="stat-ico"><svg class="icon"><use href="#i-message"/></svg></span>
+        <h3>Interagir</h3><p>Aimez et commentez les publications officielles, même sans suivre le club.</p></article>
+      <article class="card feature"><span class="stat-ico"><svg class="icon"><use href="#i-trophy"/></svg></span>
+        <h3>Compétitions</h3><p>Retrouvez toutes les publications de compétitions des clubs au même endroit.</p></article>
+      <article class="card feature"><span class="stat-ico"><svg class="icon"><use href="#i-shield"/></svg></span>
+        <h3>Communauté sûre</h3><p>Tout contenu signalé est masqué puis examiné par l'administration de l'ENSAM.</p></article>
+    </div>
+  </section>
+
+  <section class="section" id="how">
+    <div class="section-head"><div class="eyebrow">Comment ça marche</div><h2>Trois étapes pour commencer</h2></div>
+    <div class="steps">
+      <article class="card step"><h3>Connectez-vous</h3><p>Avec votre compte étudiant ENSAM. Aucun autre compte n'est nécessaire.</p></article>
+      <article class="card step"><h3>Explorez et suivez</h3><p>Trouvez les clubs qui vous intéressent et suivez leurs actualités.</p></article>
+      <article class="card step"><h3>Participez</h3><p>Rejoignez des clubs, réagissez aux publications et restez informé.</p></article>
+    </div>
+  </section>
+
+  <section class="section" id="clubs">
+    <div class="section-head"><div class="eyebrow">Les clubs</div><h2>Quelques clubs de l'ENSAM</h2></div>
+    <div class="clubs-strip">
+      <!-- Données fictives de démonstration : remplacées par ${clubs} -->
+      <a class="card strip-club" th:each="club : ${clubs}" th:href="@{/login}" href="#">
+        <span class="club-logo c0" th:class="'club-logo c' + ${club.colorIndex}" th:text="${club.initiales}">RA</span>
+        <div><strong th:text="${club.nom}">Robotics &amp; Automation</strong><span class="sub"><span th:text="${club.followersCount}">412</span> abonnés</span></div>
+      </a>
+      <a class="card strip-club" th:remove="all" href="#"><span class="club-logo c1">AI</span><div><strong>AI &amp; Data Club</strong><span class="sub">538 abonnés</span></div></a>
+      <a class="card strip-club" th:remove="all" href="#"><span class="club-logo c2">EN</span><div><strong>Entrepreneuriat ENSAM</strong><span class="sub">297 abonnés</span></div></a>
+      <a class="card strip-club" th:remove="all" href="#"><span class="club-logo c3">PC</span><div><strong>Club Photo &amp; Cinéma</strong><span class="sub">221 abonnés</span></div></a>
+    </div>
+  </section>
+
+  <section class="cta-band">
+    <div><h2>Prêt à rejoindre la communauté ?</h2><p>Connectez-vous avec votre compte étudiant ENSAM.</p></div>
+    <a class="btn btn-lg" th:href="@{/login}" href="#" style="background:#fff;color:#1b45c4">Se connecter</a>
+  </section>
+</main>
+
+<footer class="pub-footer">© ENSAM Casablanca · CampusConnect — The University Community Platform</footer>
+
+<th:block th:replace="~{fragments/layout :: scripts}"></th:block>
+</body>
+</html>

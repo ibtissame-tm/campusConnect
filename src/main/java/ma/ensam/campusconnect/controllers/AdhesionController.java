@@ -1,7 +1,7 @@
 package ma.ensam.campusconnect.controllers;
 
-import ma.ensam.campusconnect.entities.Adhesion;
 import ma.ensam.campusconnect.services.AdhesionService;
+import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
@@ -23,20 +23,31 @@ public class AdhesionController {
     }
 
     @GetMapping("/ajouter")
-    public String afficherFormulaire(Model model) {
-        model.addAttribute("adhesion", new Adhesion());
+    public String afficherFormulaire() {
         return "adhesions/formulaire";
     }
 
-    @PostMapping("/ajouter")
-    public String ajouterAdhesion(@ModelAttribute Adhesion adhesion) {
-        adhesionService.saveAdhesion(adhesion);
+    @PostMapping("/demander")
+    public String demanderAdhesion(@RequestParam Long clubId, Authentication authentication) {
+        adhesionService.demanderAdhesion(authentication.getName(), clubId);
         return "redirect:/adhesions";
     }
 
-    @GetMapping("/supprimer/{id}")
-    public String supprimerAdhesion(@PathVariable Long id) {
-        adhesionService.deleteAdhesion(id);
+    @PostMapping("/{id}/valider")
+    public String valider(@PathVariable Long id, Authentication authentication) {
+        adhesionService.valider(id, authentication.getName());
+        return "redirect:/adhesions";
+    }
+
+    @PostMapping("/{id}/refuser")
+    public String refuser(@PathVariable Long id, Authentication authentication) {
+        adhesionService.refuser(id, authentication.getName());
+        return "redirect:/adhesions";
+    }
+
+    @PostMapping("/supprimer/{id}")
+    public String supprimerAdhesion(@PathVariable Long id, Authentication authentication) {
+        adhesionService.supprimer(id, authentication.getName());
         return "redirect:/adhesions";
     }
 }

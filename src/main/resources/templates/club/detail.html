@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<!--
+  Emplacement : src/main/resources/templates/club/detail.html
+  Controller  : @GetMapping("/clubs/{id}")  +  POST /clubs/{id}/follow | /unfollow | /join
+  Modèle (en plus des attributs communs) :
+    club  : id, nom, description, initiales, logoUrl, coverUrl, colorIndex,
+            followersCount, membersCount, postsCount, followedByMe,
+            membershipStatus (null | EN_ATTENTE | ACTIVE | INACTIVE),
+            responsables : [{nom, initiales, roleLabel}]   (Responsable média / Responsable adhésions)
+    posts    : publications du club déjà filtrées par le Service
+               (publiques + privées seulement si l'étudiant est membre ACTIVE ; signalées exclues)
+    isMember : true si membershipStatus == ACTIVE
+  Follow/Unfollow et demande d'adhésion sont deux actions distinctes (règle métier).
+-->
+<html lang="fr" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Club')}"></head>
+<body>
+<svg th:replace="~{fragments/layout :: sprite}"></svg>
+
+<div class="app">
+  <aside th:replace="~{fragments/layout :: sidebar('clubs')}"></aside>
+
+  <div class="main">
+    <header th:replace="~{fragments/layout :: topbar}"></header>
+
+    <main class="content">
+
+      <section class="card club-hero reveal">
+        <div class="cover cover-pattern post-cover c1" th:class="'cover cover-pattern post-cover c' + ${club.colorIndex}">
+          <img th:if="${club.coverUrl}" th:src="${club.coverUrl}" th:alt="'Couverture ' + ${club.nom}">
+        </div>
+        <div class="head">
+          <span class="club-logo xl c1" th:class="'club-logo xl c' + ${club.colorIndex}">
+            <img th:if="${club.logoUrl}" th:src="${club.logoUrl}" th:alt="${club.nom}" style="width:100%;height:100%;border-radius:25px;object-fit:cover">
+            <span th:unless="${club.logoUrl}" th:text="${club.initiales}">AI</span>
+          </span>
+          <div class="info">
+            <h1 th:text="${club.nom}">AI &amp; Data Club</h1>
+            <p th:text="${club.description}">Machine learning, data science et projets d'intelligence artificielle. Workshops, challenges et conférences tout au long de l'année pour les étudiants de l'ENSAM.</p>
+            <div class="club-stats">
+              <span><b th:text="${club.followersCount}">538</b> abonnés</span>
+              <span><b th:text="${club.membersCount}">52</b> membres</span>
+              <span><b th:text="${club.postsCount}">24</b> publications</span>
+            </div>
+          </div>
+          <div class="actions">
+            <!-- 1) Abonnement : libre, indépendant de l'adhésion -->
+            <form th:action="${club.followedByMe} ? @{/clubs/{id}/unfollow(id=${club.id})} : @{/clubs/{id}/follow(id=${club.id})}" action="#" method="post" data-follow>
+              <button type="submit" class="btn btn-soft" th:classappend="${club.followedByMe} ? 'btn-following'" th:text="${club.followedByMe} ? 'Suivi' : 'Suivre'">Suivre</button>
+            </form>
+            <!-- 2) Adhésion : un bouton par état possible -->
+            <form th:if="${club.membershipStatus == null}" th:action="@{/clubs/{id}/join(id=${club.id})}" action="#" method="post" data-join>
+              <button type="submit" class="btn btn-primary"><svg class="icon icon-sm"><use href="#i-plus"/></svg> Demander à rejoindre</button>
+            </form>
+            <button type="button" class="btn btn-soft" th:if="${club.membershipStatus == 'EN_ATTENTE'}" disabled>
+              <svg class="icon icon-sm"><use href="#i-clock"/></svg> Demande en attente</button>
+            <span class="badge badge-active" th:if="${club.membershipStatus == 'ACTIVE'}" style="align-self:center;padding:9px 14px">
+              <svg class="icon icon-sm"><use href="#i-check"/></svg> Membre actif</span>
+            <span class="badge badge-inactive" th:if="${club.membershipStatus == 'INACTIVE'}" style="align-self:center;padding:9px 14px">Adhésion inactive</span>
+          </div>
+        </div>
+      </section>
+
+      <div class="layout-2">
+        <section class="feed">
+          <div class="feed-head"><h2 style="font-size:20px">Publications officielles</h2></div>
+
+          <p class="empty card card-pad" th:if="${#lists.isEmpty(posts)}">Ce club n'a pas encore publié.</p>
+          <th:block th:each="post : ${posts}">
+            <article th:replace="~{fragments/post :: card(${post})}"></article>
+          </th:block>
+
+          <!-- Rappel pour les non-membres : certaines publications sont réservées -->
+          <div class="card locked reveal" th:unless="${isMember}">
+            <svg class="icon" style="width:28px;height:28px;color:var(--muted)"><use href="#i-lock"/></svg>
+            <p style="margin-top:8px;font-weight:600">Certaines publications sont réservées aux membres actifs</p>
+            <p class="hint">Envoyez une demande d'adhésion pour y accéder une fois validée.</p>
+          </div>
+        </section>
+
+        <aside class="side">
+          <section class="card card-pad reveal">
+            <div class="card-title"><h3>À propos</h3></div>
+            <div class="kv"><span>Abonnés</span><b th:text="${club.followersCount}">538</b></div>
+            <div class="kv"><span>Membres actifs</span><b th:text="${club.membersCount}">52</b></div>
+            <div class="kv"><span>Publications</span><b th:text="${club.postsCount}">24</b></div>
+          </section>
+
+
+          <section class="card card-pad reveal">
+            <div class="card-title">
+              <h3>Membres du club</h3>
+              <span class="badge" th:text="${club.membersCount}">0</span>
+            </div>
+
+            <p class="empty" th:if="${#lists.isEmpty(club.membres)}">
+              Aucun membre actif pour le moment.
+            </p>
+
+            <div class="summary-item" th:each="m : ${club.membres}">
+        <span class="avatar avatar-sm"
+              th:text="${m.initiales}">
+            AB
+        </span>
+
+              <div class="grow">
+                <strong th:text="${m.prenom + ' ' + m.nom}">
+                  Prénom Nom
+                </strong>
+
+                <span class="sub"
+                      th:if="${#lists.isEmpty(m.roles)}">
+                Membre
+            </span>
+
+                <span class="sub"
+                      th:each="role : ${m.roles}"
+                      th:text="${role == 'RESPONSABLE_MEDIA'}
+                    ? 'Responsable média'
+                    : 'Responsable adhésions'">
+                Responsable
+            </span>
+              </div>
+
+              <div style="display:flex;gap:8px;align-items:center">
+                <svg class="icon icon-sm"
+                     th:if="${m.roles.contains('RESPONSABLE_MEDIA')}"
+                     title="Responsable média">
+                  <use href="#i-camera"/>
+                </svg>
+
+                <svg class="icon icon-sm"
+                     th:if="${m.roles.contains('RESPONSABLE_ADHESION')}"
+                     title="Responsable adhésions">
+                  <use href="#i-user-check"/>
+                </svg>
+
+                <svg class="icon icon-sm"
+                     th:if="${#lists.isEmpty(m.roles)}"
+                     title="Membre">
+                  <use href="#i-user"/>
+                </svg>
+              </div>
+            </div>
+          </section>
+
+        </aside>
+      </div>
+    </main>
+  </div>
+</div>
+
+<div th:replace="~{fragments/post :: reportModal}"></div>
+<th:block th:replace="~{fragments/layout :: scripts}"></th:block>
+</body>
+</html>

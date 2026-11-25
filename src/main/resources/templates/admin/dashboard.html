@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<!--
+  Emplacement : src/main/resources/templates/admin/dashboard.html
+  Controller  : @GetMapping("/admin") et @PostMapping("/admin/clubs") (réservés au rôle ADMIN)
+  Modèle : stats, activity, reports, clubs, students, q + success / error (messages flash)
+-->
+<html lang="fr" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Admin')}"></head>
+<body>
+<svg th:replace="~{fragments/layout :: sprite}"></svg>
+
+<div class="app">
+  <aside th:replace="~{fragments/layout :: sidebar('admin')}"></aside>
+
+  <div class="main">
+    <header th:replace="~{fragments/layout :: topbar}"></header>
+
+    <main class="content">
+      <div class="page-head reveal">
+        <div><h1>Admin Dashboard</h1><p>Supervision de CampusConnect — administration de l'ENSAM Casablanca.</p></div>
+        <button class="btn btn-primary" type="button" data-open-modal="clubModal"><svg class="icon icon-sm"><use href="#i-plus"/></svg> Nouveau club</button>
+      </div>
+
+      <div class="alert alert-success" role="status" th:if="${success}" th:text="${success}">Modifications enregistrées.</div>
+      <div class="alert alert-error" role="alert" th:if="${error}" th:text="${error}">Une erreur est survenue.</div>
+
+      <section class="stats-4 reveal">
+        <div class="card stat"><span class="stat-ico"><svg class="icon"><use href="#i-user"/></svg></span><div><strong th:text="${stats.studentsCount}">0</strong><span>Étudiants</span></div></div>
+        <div class="card stat"><span class="stat-ico"><svg class="icon"><use href="#i-layers"/></svg></span><div><strong th:text="${stats.clubsCount}">0</strong><span>Clubs</span></div></div>
+        <div class="card stat"><span class="stat-ico"><svg class="icon"><use href="#i-message"/></svg></span><div><strong th:text="${stats.postsCount}">0</strong><span>Publications</span></div></div>
+        <div class="card stat"><span class="stat-ico" style="background:#fdecee;color:var(--danger)"><svg class="icon"><use href="#i-flag"/></svg></span><div><strong th:text="${stats.pendingReportsCount}">0</strong><span>Signalements à traiter</span></div></div>
+      </section>
+
+      <div class="layout-2">
+        <div style="display:grid;gap:20px;min-width:0">
+          <div class="tabs reveal" role="tablist" style="justify-self:start">
+            <button type="button" class="tab active" data-tab="reports" data-tab-group="admin">Signalements</button>
+            <button type="button" class="tab" data-tab="clubs" data-tab-group="admin">Clubs</button>
+            <button type="button" class="tab" data-tab="students" data-tab-group="admin">Étudiants</button>
+          </div>
+
+          <!-- ===== Signalements : contenus déjà masqués automatiquement ===== -->
+          <section class="tab-panel active" data-panel="reports" data-tab-group="admin" style="gap:16px">
+            <div style="display:grid;gap:16px">
+              <p class="empty card card-pad" th:if="${#lists.isEmpty(reports)}">Aucun signalement à traiter. 🎉</p>
+              <article class="card report" th:each="r : ${reports}">
+                <div class="meta-row">
+                  <span class="badge badge-pending"><svg class="icon icon-sm"><use href="#i-flag"/></svg> <span th:text="${r.motif}">Contenu inapproprié</span></span>
+                  <span><svg class="icon icon-sm"><use href="#i-user"/></svg> Signalé par <b th:text="${r.signalePar}">Salma B.</b></span>
+                  <span><svg class="icon icon-sm"><use href="#i-clock"/></svg> <span th:text="${r.dateSignalement}">Il y a 1 h</span></span>
+                </div>
+                <div class="report-quote">
+                  <strong th:text="${r.publication.titre}">Titre</strong>
+                  <span th:text="${r.publication.contenu}">Contenu de la publication signalée, actuellement masqué pour les étudiants.</span>
+                  <div class="hint" style="margin-top:6px">Club : <span th:text="${r.publication.clubNom}">Club</span> · masquée automatiquement</div>
+                </div>
+                <div class="row-actions" style="justify-content:flex-start">
+                  <form th:action="@{/admin/reports/{id}/restore(id=${r.id})}" action="#" method="post"><button class="btn btn-sm btn-success-soft" type="submit"><svg class="icon icon-sm"><use href="#i-check"/></svg> Rétablir la publication</button></form>
+                  <form th:action="@{/admin/reports/{id}/delete(id=${r.id})}" action="#" method="post" onsubmit="return confirm('Supprimer définitivement cette publication ?')"><button class="btn btn-sm btn-danger-soft" type="submit">Supprimer définitivement</button></form>
+                </div>
+              </article>
+            </div>
+          </section>
+
+          <!-- ===== Clubs ===== -->
+          <section class="card tab-panel" data-panel="clubs" data-tab-group="admin">
+            <div class="table-head"><h3>Clubs de l'ENSAM</h3></div>
+            <div class="table-wrap">
+              <table class="table">
+                <thead><tr><th>Club</th><th>Abonnés</th><th>Membres</th><th>Publications</th></tr></thead>
+                <tbody>
+                <tr th:each="c : ${clubs}">
+                  <td><div class="person"><span class="club-logo c1" th:class="'club-logo c' + ${c.colorIndex}" style="width:38px;height:38px;border-radius:12px;font-size:13px" th:text="${c.initiales}">AI</span><strong th:text="${c.nom}">Club</strong></div></td>
+                  <td th:text="${c.followersCount}">0</td>
+                  <td th:text="${c.membersCount}">0</td>
+                  <td th:text="${c.postsCount}">0</td>
+                </tr>
+                </tbody>
+              </table>
+            </div>
+          </section>
+
+          <!-- ===== Étudiants ===== -->
+          <section class="card tab-panel" data-panel="students" data-tab-group="admin">
+            <div class="table-head">
+              <h3>Étudiants</h3>
+              <form class="search" th:action="@{/admin}" action="#" method="get" style="max-width:300px;flex:1">
+                <svg class="icon"><use href="#i-search"/></svg>
+                <input class="input" type="search" name="q" th:value="${q}" placeholder="Rechercher un étudiant…" aria-label="Rechercher un étudiant">
+              </form>
+            </div>
+            <div class="table-wrap">
+              <table class="table">
+                <thead><tr><th>Étudiant</th><th>Clubs (membre)</th></tr></thead>
+                <tbody>
+                <tr th:each="s : ${students}">
+                  <td><div class="person"><span class="avatar avatar-sm" th:text="${s.initiales}">AS</span><strong th:text="${s.nom}">Nom</strong></div></td>
+                  <td th:text="${s.clubsCount}">0</td>
+                </tr>
+                </tbody>
+              </table>
+            </div>
+          </section>
+        </div>
+
+        <aside class="side">
+          <section class="card card-pad reveal">
+            <div class="card-title"><h3>Publications · 7 jours</h3></div>
+            <div class="bars">
+              <div class="bar" th:each="d : ${activity}" th:style="'height:' + ${d.percent} + '%'" style="height:40%"><b th:text="${d.count}">9</b><span th:text="${d.label}">Lun</span></div>
+            </div>
+          </section>
+        </aside>
+      </div>
+    </main>
+  </div>
+</div>
+
+<!-- Création d'un club (réservé à l'administrateur) -->
+<div class="modal" id="clubModal" role="dialog" aria-modal="true" aria-labelledby="clubModalTitle">
+  <div class="modal-box wide">
+    <h3 id="clubModalTitle">Nouveau club</h3>
+    <p>Un club possède un nom et une description.</p>
+    <form class="form-stack" style="margin-top:0" th:action="@{/admin/clubs}" action="#" method="post">
+      <div class="field"><label for="clubNom">Nom du club</label><input class="input" id="clubNom" name="nom" required maxlength="80"></div>
+      <div class="field"><label for="clubDesc">Description</label><textarea class="input" id="clubDesc" name="description" required></textarea></div>
+      <div class="modal-actions"><button type="button" class="btn btn-outline" data-close-modal>Annuler</button><button type="submit" class="btn btn-primary">Créer le club</button></div>
+    </form>
+  </div>
+</div>
+
+<th:block th:replace="~{fragments/layout :: scripts}"></th:block>
+</body>
+</html>

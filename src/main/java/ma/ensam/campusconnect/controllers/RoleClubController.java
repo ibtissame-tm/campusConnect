@@ -1,6 +1,6 @@
 package ma.ensam.campusconnect.controllers;
 
-import ma.ensam.campusconnect.entities.RoleClub;
+import ma.ensam.campusconnect.enums.TypeRoleClub;
 import ma.ensam.campusconnect.services.RoleClubService;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -24,17 +24,22 @@ public class RoleClubController {
 
     @GetMapping("/ajouter")
     public String afficherFormulaire(Model model) {
-        model.addAttribute("roleClub", new RoleClub());
+        model.addAttribute("etudiants", roleClubService.getEtudiants());
+        model.addAttribute("clubs", roleClubService.getClubs());
+        model.addAttribute("typesRoles", TypeRoleClub.values());
+
         return "roles-club/formulaire";
     }
 
     @PostMapping("/ajouter")
-    public String ajouterRole(@ModelAttribute RoleClub roleClub) {
-        roleClubService.saveRole(roleClub);
+    public String ajouterRole(@RequestParam Long utilisateurId,
+                              @RequestParam Long clubId,
+                              @RequestParam TypeRoleClub role) {
+        roleClubService.attribuerRole(utilisateurId, clubId, role);
         return "redirect:/roles-club";
     }
 
-    @GetMapping("/supprimer/{id}")
+    @PostMapping("/supprimer/{id}")
     public String supprimerRole(@PathVariable Long id) {
         roleClubService.deleteRole(id);
         return "redirect:/roles-club";

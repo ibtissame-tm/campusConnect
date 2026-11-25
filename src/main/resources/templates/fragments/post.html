@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<!--
+  Emplacement : src/main/resources/templates/fragments/post.html
+  Fragment réutilisable de publication officielle (Home, Community, Club Details…).
+
+  Usage dans une page :
+    <th:block th:each="post : ${posts}">
+      <article th:replace="~{fragments/post :: card(${post})}"></article>
+    </th:block>
+    ...
+    <div th:replace="~{fragments/post :: reportModal}"></div>   (une seule fois par page)
+
+  Champs attendus pour post : id, titre, contenu, type (ACTUALITE|COMPETITION), visibilite (PUBLIQUE|PRIVEE),
+  datePublication (texte), likesCount, commentsCount, likedByMe, imageUrl,
+  club{id, nom, initiales, logoUrl, colorIndex}, comments[{auteur, initiales, contenu}]
+-->
+<html lang="fr" xmlns:th="http://www.thymeleaf.org">
+<body>
+
+<article th:fragment="card(post)" class="card post reveal" th:id="'post-' + ${post.id}">
+  <div class="post-head">
+    <a th:href="${post.club.id != null} ? @{/clubs/{id}(id=${post.club.id})} : @{/home}" class="club-logo" th:classappend="'c' + ${post.club.colorIndex}">
+      <img th:if="${post.club.logoUrl}" th:src="${post.club.logoUrl}" th:alt="${post.club.nom}"
+           style="width:100%;height:100%;border-radius:14px;object-fit:cover">
+      <span th:unless="${post.club.logoUrl}" th:text="${post.club.initiales}">RC</span>
+    </a>
+    <div class="post-meta">
+      <strong th:text="${post.club.nom}">Nom du club</strong>
+      <span th:text="${post.datePublication}">Il y a 2 h</span>
+    </div>
+    <div class="post-badges">
+      <span class="badge" th:classappend="${post.type == 'COMPETITION'} ? 'badge-comp' : 'badge-news'"
+            th:text="${post.type == 'COMPETITION'} ? 'Compétition' : 'Actualité'">Actualité</span>
+      <span class="badge badge-private" th:if="${post.visibilite == 'PRIVEE'}">
+        <svg class="icon icon-sm"><use href="#i-lock"/></svg> Membres</span>
+      <span class="badge badge-public" th:unless="${post.visibilite == 'PRIVEE'}">
+        <svg class="icon icon-sm"><use href="#i-globe"/></svg> Public</span>
+    </div>
+  </div>
+
+  <div class="post-body">
+    <h4 th:text="${post.titre}">Titre</h4>
+    <p th:text="${post.contenu}">Contenu de la publication…</p>
+  </div>
+
+  <div class="post-cover cover-pattern" th:classappend="'c' + ${post.club.colorIndex}" th:if="${post.imageUrl}">
+    <img th:src="${post.imageUrl}" th:alt="${post.titre}">
+  </div>
+
+  <div class="post-actions">
+    <form th:action="@{/posts/{id}/like(id=${post.id})}" method="post" data-like style="display:contents">
+      <button type="submit" class="act" th:classappend="${post.likedByMe} ? 'liked'">
+        <svg class="icon"><use href="#i-heart"/></svg>
+        <span class="count" th:text="${post.likesCount}">0</span>
+      </button>
+    </form>
+    <button type="button" class="act" th:attr="data-toggle-comments='comments-' + ${post.id}" aria-expanded="false">
+      <svg class="icon"><use href="#i-message"/></svg>
+      <span th:text="${post.commentsCount}">0</span>
+    </button>
+    <button type="button" class="act report" th:attr="data-report=@{/posts/{id}/report(id=${post.id})}">
+      <svg class="icon"><use href="#i-flag"/></svg> Signaler
+    </button>
+  </div>
+
+  <div class="comments" th:id="'comments-' + ${post.id}">
+    <div class="comment" th:each="c : ${post.comments}">
+      <span class="avatar avatar-sm" th:text="${c.initiales}">AB</span>
+      <div><b th:text="${c.auteur}">Auteur</b><p th:text="${c.contenu}">Commentaire</p></div>
+    </div>
+    <form class="comment-form" th:action="@{/posts/{id}/comments(id=${post.id})}" method="post" data-comment>
+      <input class="input" type="text" name="contenu" maxlength="500" placeholder="Écrire un commentaire…" required>
+      <button class="btn btn-primary btn-sm" type="submit">Envoyer</button>
+    </form>
+  </div>
+</article>
+
+<!-- Modale de signalement : le JS renseigne l'attribut action du formulaire -->
+<div class="modal" id="reportModal" th:fragment="reportModal" role="dialog" aria-modal="true" aria-labelledby="reportTitle">
+  <div class="modal-box">
+    <h3 id="reportTitle">Signaler cette publication</h3>
+    <p>Le contenu sera masqué immédiatement puis examiné par l'administration de l'ENSAM.</p>
+    <form method="post" action="#">
+      <input type="hidden" th:if="${_csrf != null}" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+      <div class="field">
+        <label for="reportReason">Motif</label>
+        <select class="input" id="reportReason" name="motif" required>
+          <option value="">Choisir un motif…</option>
+          <option>Contenu inapproprié</option>
+          <option>Harcèlement ou propos offensants</option>
+          <option>Information fausse ou trompeuse</option>
+          <option>Autre</option>
+        </select>
+      </div>
+      <div class="modal-actions">
+        <button type="button" class="btn btn-outline" data-close-modal>Annuler</button>
+        <button type="submit" class="btn btn-primary">Signaler</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+</body>
+</html>

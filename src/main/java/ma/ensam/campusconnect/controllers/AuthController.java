@@ -14,7 +14,7 @@ public class AuthController {
         if (authentication != null
                 && authentication.isAuthenticated()
                 && !(authentication instanceof AnonymousAuthenticationToken)) {
-            return "auth/redirect:/";
+            return "redirect:/";
         }
         return "auth/login";
     }

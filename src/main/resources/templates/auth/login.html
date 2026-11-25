@@ -1,78 +1,68 @@
 <!DOCTYPE html>
+<!--
+  Emplacement : src/main/resources/templates/auth/login.html
+  Controller  : @GetMapping("/login") public String login() { return "auth/login"; }
+  Spring Security : .formLogin(f -> f.loginPage("/login").loginProcessingUrl("/login").defaultSuccessUrl("/home", true))
+  Les champs doivent s'appeler "username" et "password" (valeurs par défaut de Spring Security).
+  Seuls les comptes étudiants ENSAM peuvent se connecter : il n'y a volontairement aucune inscription.
+-->
 <html lang="fr" xmlns:th="http://www.thymeleaf.org">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Connexion · CampusConnect</title>
-
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
-    <link rel="stylesheet" th:href="@{/css/login.css}">
-</head>
+<head th:replace="~{fragments/layout :: head('Connexion')}"></head>
 <body>
-<main class="auth">
+<svg th:replace="~{fragments/layout :: sprite}"></svg>
 
-    <!-- Panneau gauche : identité de l'application -->
-    <section class="auth__brand">
-        <div class="brand__logo">CampusConnect</div>
+<div class="auth">
+  <section class="auth-side">
+    <a class="brand" th:href="@{/}" href="#">
+      <span class="brand-mark"><svg class="icon"><use href="#i-cap"/></svg></span>
+      <span class="brand-name">CampusConnect<small>ENSAM Casablanca</small></span>
+    </a>
+    <div style="position:relative;z-index:1">
+      <h1>La vie associative de l'ENSAM, <span style="color:#a9b6ff">au même endroit.</span></h1>
+      <p class="lead">Découvrez les clubs, suivez leurs actualités et rejoignez ceux qui vous ressemblent.</p>
+      <ul class="auth-points">
+        <li><span class="tick"><svg class="icon"><use href="#i-compass"/></svg></span> Explorez tous les clubs de l'école</li>
+        <li><span class="tick"><svg class="icon"><use href="#i-heart"/></svg></span> Suivez, aimez et commentez les publications officielles</li>
+        <li><span class="tick"><svg class="icon"><use href="#i-bell"/></svg></span> Recevez les réponses à vos demandes d'adhésion</li>
+      </ul>
+    </div>
+    <p class="hint" style="color:#8f9cc9">© ENSAM Casablanca · Projet CampusConnect</p>
+  </section>
 
-        <div class="brand__content">
-            <h1>Tous les clubs de l'ENSAM, au même endroit.</h1>
-            <p>Retrouve tes clubs, suis leurs événements et reste en contact avec les autres étudiants.</p>
+  <section class="auth-main">
+    <div class="auth-card">
+      <h2>Connexion</h2>
+      <p class="sub">Utilisez votre compte étudiant ENSAM.</p>
+
+      <!-- Messages renvoyés par Spring Security (?error / ?logout) -->
+      <div class="alert alert-error" role="alert" th:if="${param.error}" style="margin-top:20px">
+        Identifiants incorrects ou compte non autorisé.</div>
+      <div class="alert alert-success" role="status" th:if="${param.logout}" style="margin-top:20px">
+        Vous avez été déconnecté.</div>
+
+      <form class="form-stack" th:action="@{/login}" action="#" method="post">
+        <div class="field">
+          <label for="username">Adresse e-mail</label>
+          <div class="input-wrap">
+            <svg class="icon"><use href="#i-user"/></svg>
+            <input class="input" id="username" name="username" type="email" autocomplete="username" placeholder="prenom.nom@exemple.ma" required autofocus>
+          </div>
         </div>
-
-        <p class="brand__footer">École Nationale Supérieure d'Arts et Métiers · Casablanca</p>
-    </section>
-
-    <!-- Panneau droit : formulaire -->
-    <section class="auth__panel">
-        <div class="card">
-            <header class="card__header">
-                <h2>Connexion</h2>
-                <p>Utilise ton adresse e-mail pour accéder à ton espace.</p>
-            </header>
-
-            <!-- Messages -->
-            <div class="alert alert--error" role="alert" th:if="${param.error}">
-                E-mail ou mot de passe incorrect. Vérifie tes informations et réessaie.
-            </div>
-            <div class="alert alert--success" role="status" th:if="${param.logout}">
-                Tu as été déconnecté avec succès.
-            </div>
-
-            <!-- th:action ajoute automatiquement le token CSRF -->
-            <form th:action="@{/login}" method="post" class="form" novalidate>
-
-                <div class="field">
-                    <label for="username">Adresse e-mail</label>
-                    <input type="email" id="username" name="username"
-                           placeholder="prenom.nom@ensam.ma"
-                           autocomplete="username" required autofocus>
-                </div>
-
-                <div class="field">
-                    <label for="password">Mot de passe</label>
-                    <div class="field__password">
-                        <input type="password" id="password" name="password"
-                               placeholder="Ton mot de passe"
-                               autocomplete="current-password" required>
-                        <button type="button" class="toggle" id="togglePassword"
-                                aria-label="Afficher le mot de passe">Afficher</button>
-                    </div>
-                </div>
-
-                <button type="submit" class="btn">Se connecter</button>
-            </form>
-
-            <p class="card__help">
-                Un problème de connexion ? Contacte l'administrateur de ton club.
-            </p>
+        <div class="field">
+          <label for="password">Mot de passe</label>
+          <div class="input-wrap">
+            <svg class="icon"><use href="#i-lock"/></svg>
+            <input class="input" id="password" name="password" type="password" autocomplete="current-password" placeholder="••••••••" required>
+          </div>
         </div>
-    </section>
+        <button class="btn btn-primary btn-block" type="submit">Se connecter</button>
+      </form>
 
-</main>
+      <p class="auth-note">Accès réservé aux étudiants de l'ENSAM Casablanca.<br>Un problème de compte ? Contactez l'administration.</p>
+    </div>
+  </section>
+</div>
 
-<script th:src="@{/js/login.js}"></script>
+<th:block th:replace="~{fragments/layout :: scripts}"></th:block>
 </body>
 </html>

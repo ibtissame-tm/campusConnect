@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<!--
+  Emplacement : src/main/resources/templates/fragments/layout.html
+  Fragments réutilisables : head, sprite, sidebar, topbar, scripts
+-->
+<html lang="fr" xmlns:th="http://www.thymeleaf.org">
+
+<!-- ========== <head> commun ========== -->
+<head th:fragment="head(title)">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="_csrf" th:if="${_csrf != null}" th:content="${_csrf.token}">
+  <title th:text="${title} + ' · CampusConnect'">CampusConnect</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&family=Sora:wght@600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" th:href="@{/css/campusconnect.css}">
+</head>
+
+<body>
+
+<!-- ========== Sprite d'icônes (à placer une seule fois juste après <body>) ========== -->
+<svg th:fragment="sprite" width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <symbol id="i-cap" viewBox="0 0 24 24"><path d="m2 9 10-5 10 5-10 5z"/><path d="M6 11.5V16c0 1.5 3 3 6 3s6-1.5 6-3v-4.5"/></symbol>
+    <symbol id="i-home" viewBox="0 0 24 24"><path d="M3 10.5 12 3l9 7.5V20a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/></symbol>
+    <symbol id="i-compass" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="m15.5 8.5-2 5-5 2 2-5z"/></symbol>
+    <symbol id="i-users" viewBox="0 0 24 24"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c.5-3.5 3-5.5 6.5-5.5s6 2 6.5 5.5"/><path d="M16 4.7a3.5 3.5 0 0 1 0 6.6M18 14.8c2 .6 3.2 2.3 3.5 5.2"/></symbol>
+    <symbol id="i-trophy" viewBox="0 0 24 24"><path d="M8 4h8v5a4 4 0 0 1-8 0z"/><path d="M8 6H4v1a4 4 0 0 0 4 4M16 6h4v1a4 4 0 0 1-4 4M12 13v4M8 20h8M10 17h4"/></symbol>
+    <symbol id="i-bell" viewBox="0 0 24 24"><path d="M6 16v-5a6 6 0 0 1 12 0v5l1.5 2h-15z"/><path d="M10 21h4"/></symbol>
+    <symbol id="i-user" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21c.6-4 3.8-6 8-6s7.4 2 8 6"/></symbol>
+    <symbol id="i-camera" viewBox="0 0 24 24">
+      <path d="M14 4H10L8 7H4a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-4z"/>
+      <circle cx="12" cy="13" r="3"/>
+    </symbol>
+
+    <symbol id="i-user-check" viewBox="0 0 24 24">
+      <circle cx="9" cy="8" r="4"/>
+      <path d="M2 21c.5-4 3-6 7-6"/>
+      <path d="m16 17 2 2 4-4"/>
+    </symbol>
+    <symbol id="i-settings" viewBox="0 0 24 24"><path d="M4 7h10M18 7h2M4 17h2M10 17h10"/><circle cx="16" cy="7" r="2"/><circle cx="8" cy="17" r="2"/></symbol>
+    <symbol id="i-logout" viewBox="0 0 24 24"><path d="M9 4H5a1 1 0 0 0-1 1v14a1 1 0 0 0 1 1h4M16 8l4 4-4 4M20 12H9"/></symbol>
+    <symbol id="i-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></symbol>
+    <symbol id="i-heart" viewBox="0 0 24 24"><path d="M12 20s-7.5-4.6-7.5-10A4.2 4.2 0 0 1 12 7.6 4.2 4.2 0 0 1 19.5 10c0 5.4-7.5 10-7.5 10z"/></symbol>
+    <symbol id="i-message" viewBox="0 0 24 24"><path d="M4 5h16v11H9l-5 4z"/></symbol>
+    <symbol id="i-flag" viewBox="0 0 24 24"><path d="M5 21V4M5 4h11l-2 4 2 4H5"/></symbol>
+    <symbol id="i-lock" viewBox="0 0 24 24"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></symbol>
+    <symbol id="i-globe" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c3 3 3 15 0 18M12 3c-3 3-3 15 0 18"/></symbol>
+    <symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
+    <symbol id="i-check" viewBox="0 0 24 24"><path d="m5 12.5 4.5 4.5L19 7.5"/></symbol>
+    <symbol id="i-shield" viewBox="0 0 24 24"><path d="M12 3 5 6v6c0 4.5 3 7.5 7 9 4-1.5 7-4.5 7-9V6z"/><path d="m9 12 2 2 4-4"/></symbol>
+    <symbol id="i-layers" viewBox="0 0 24 24"><path d="m12 3 9 5-9 5-9-5z"/><path d="m3 13 9 5 9-5"/></symbol>
+    <symbol id="i-menu" viewBox="0 0 24 24"><path d="M4 7h16M4 12h16M4 17h10"/></symbol>
+    <symbol id="i-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></symbol>
+  </defs>
+</svg>
+
+<!-- ========== Sidebar ==========
+     Appel : <aside th:replace="~{fragments/layout :: sidebar('home')}"></aside>
+     Variables du modèle attendues :
+       student            : l'étudiant connecté (prenom, nom, initiales, filiere)
+       unreadCount        : nombre de notifications non lues
+       isClubManager      : true si l'étudiant est RESPONSABLE_MEDIA ou RESPONSABLE_ADHESION d'un club
+       isAdmin            : true pour l'administrateur ENSAM
+-->
+<aside class="sidebar" id="sidebar" th:fragment="sidebar(active)">
+  <a class="brand" th:href="@{/home}">
+    <span class="brand-mark"><svg class="icon"><use href="#i-cap"/></svg></span>
+    <span class="brand-name">CampusConnect<small>ENSAM Casablanca</small></span>
+  </a>
+
+  <nav class="nav" aria-label="Navigation principale">
+    <a class="nav-link" th:href="@{/home}" th:classappend="${active == 'home'} ? 'active'">
+      <svg class="icon"><use href="#i-home"/></svg> Home</a>
+    <a class="nav-link" th:href="@{/clubs}" th:classappend="${active == 'clubs'} ? 'active'">
+      <svg class="icon"><use href="#i-compass"/></svg> Explore Clubs</a>
+    <a class="nav-link" th:href="@{/community}" th:classappend="${active == 'community'} ? 'active'">
+      <svg class="icon"><use href="#i-users"/></svg> Community</a>
+    <a class="nav-link" th:href="@{/competitions}" th:classappend="${active == 'competitions'} ? 'active'">
+      <svg class="icon"><use href="#i-trophy"/></svg> Competitions</a>
+
+    <!-- Espace responsable : visible uniquement pour un responsable de club -->
+    <div th:if="${isClubManager}">
+      <div class="nav-label">Espace responsable</div>
+      <a class="nav-link" th:href="@{/club-management}" th:classappend="${active == 'management'} ? 'active'">
+        <svg class="icon"><use href="#i-layers"/></svg> Gestion du club</a>
+    </div>
+
+    <!-- Administration : visible uniquement pour l'admin ENSAM -->
+    <div th:if="${isAdmin}">
+      <div class="nav-label">Administration</div>
+      <a class="nav-link" th:href="@{/admin}" th:classappend="${active == 'admin'} ? 'active'">
+        <svg class="icon"><use href="#i-shield"/></svg> Admin Dashboard</a>
+    </div>
+
+    <div class="nav-label">Compte</div>
+    <a class="nav-link" th:href="@{/profile}" th:classappend="${active == 'profile'} ? 'active'">
+      <svg class="icon"><use href="#i-user"/></svg> My Profile</a>
+    <a class="nav-link" th:href="@{/settings}" th:classappend="${active == 'settings'} ? 'active'">
+      <svg class="icon"><use href="#i-settings"/></svg> Settings</a>
+  </nav>
+
+  <div class="sidebar-foot">
+    <div class="me">
+      <span class="avatar" th:text="${student.initiales}">AS</span>
+      <div class="me-info">
+        <strong th:text="${student.prenom + ' ' + student.nom}">Prénom Nom</strong>
+        <span>Étudiant ENSAM</span>
+      </div>
+    </div>
+    <!-- Logout : POST (Spring Security exige POST + CSRF par défaut) -->
+    <form th:action="@{/logout}" method="post">
+      <button type="submit" class="nav-link" style="width:100%">
+        <svg class="icon"><use href="#i-logout"/></svg> Logout
+      </button>
+    </form>
+  </div>
+</aside>
+
+<!-- ========== Header (recherche + notifications) ==========
+     La recherche est un simple formulaire GET traité par un Controller Spring MVC. -->
+<header class="topbar" th:fragment="topbar">
+  <button class="menu-toggle" id="menuToggle" type="button" aria-label="Ouvrir le menu">
+    <svg class="icon"><use href="#i-menu"/></svg>
+  </button>
+  <form class="search" th:action="@{/clubs}" method="get" role="search">
+    <svg class="icon"><use href="#i-search"/></svg>
+    <input class="input" type="search" name="q" placeholder="Rechercher un club, une publication…" aria-label="Rechercher">
+  </form>
+  <div class="topbar-actions">
+    <a class="avatar" th:href="@{/profile}" th:text="${student.initiales}" aria-label="Mon profil">AS</a>
+  </div>
+</header>
+
+<!-- ========== Scripts + toast (juste avant </body>) ========== -->
+<th:block th:fragment="scripts">
+  <div class="overlay" id="overlay"></div>
+  <div class="toast" id="toast" role="status"></div>
+  <script th:src="@{/js/campusconnect.js}"></script>
+</th:block>
+
+</body>
+</html>

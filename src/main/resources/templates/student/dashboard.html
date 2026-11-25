@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<!--
+  Emplacement : src/main/resources/templates/student/dashboard.html
+  Controller attendu : @GetMapping("/home") -> return "student/dashboard";
+
+  Attributs du Model :
+    student            : prenom, nom, initiales, filiere
+    activePage         : "home"
+    unreadCount        : int
+    isClubManager      : boolean   (RESPONSABLE_MEDIA ou RESPONSABLE_ADHESION)
+    isAdmin            : boolean
+    stats              : followingCount, activeMembershipCount, pendingCount
+    feedType           : null | "ACTUALITE" | "COMPETITION"
+    posts              : publications DÉJÀ FILTRÉES côté Service
+                         (PUBLIQUE pour tous + PRIVEE seulement si membre ACTIVE ; signalées exclues)
+                         champs : id, titre, contenu, type, visibilite, datePublication (texte),
+                                  likesCount, commentsCount, likedByMe, imageUrl,
+                                  club{id, nom, initiales, logoUrl, colorIndex}, comments[{auteur, initiales, contenu}]
+    recommendedClubs   : id, nom, initiales, logoUrl, colorIndex, followersCount, followedByMe
+    memberships        : club{id, nom, initiales, colorIndex}, statut (EN_ATTENTE|ACTIVE|INACTIVE), role (nullable)
+-->
+<html lang="fr" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Home')}"></head>
+<body>
+<svg th:replace="~{fragments/layout :: sprite}"></svg>
+
+<div class="app">
+  <aside th:replace="~{fragments/layout :: sidebar('home')}"></aside>
+
+  <div class="main">
+    <header th:replace="~{fragments/layout :: topbar}"></header>
+
+    <main class="content">
+
+      <!-- ===== Bandeau de bienvenue ===== -->
+      <section class="hero reveal">
+        <div style="position:relative;z-index:1">
+          <h1>Bonjour <span th:text="${student.prenom}">Aya</span> 👋</h1>
+          <p>Retrouvez les dernières actualités de vos clubs et découvrez de nouvelles communautés à l'ENSAM.</p>
+          <div class="hero-actions">
+            <a class="btn btn-primary" th:href="@{/clubs}" style="background:#fff;color:#1b45c4;box-shadow:none">
+              <svg class="icon icon-sm"><use href="#i-compass"/></svg> Explorer les clubs</a>
+            <a class="btn btn-outline" th:href="@{/competitions}">
+              <svg class="icon icon-sm"><use href="#i-trophy"/></svg> Voir les compétitions</a>
+          </div>
+        </div>
+      </section>
+
+      <!-- ===== Statistiques personnelles ===== -->
+      <section class="stats reveal">
+        <div class="card stat">
+          <span class="stat-ico"><svg class="icon"><use href="#i-heart"/></svg></span>
+          <div><strong th:text="${stats.followingCount}">6</strong><span>Clubs suivis</span></div>
+        </div>
+        <div class="card stat">
+          <span class="stat-ico"><svg class="icon"><use href="#i-check"/></svg></span>
+          <div><strong th:text="${stats.activeMembershipCount}">2</strong><span>Adhésions actives</span></div>
+        </div>
+        <div class="card stat">
+          <span class="stat-ico"><svg class="icon"><use href="#i-clock"/></svg></span>
+          <div><strong th:text="${stats.pendingCount}">1</strong><span>Demande en attente</span></div>
+        </div>
+      </section>
+
+      <div class="layout-2">
+
+        <!-- ===== Colonne principale : publications récentes ===== -->
+        <section class="feed">
+          <div class="feed-head">
+            <h2 style="font-size:20px">Publications récentes</h2>
+            <nav class="tabs" aria-label="Filtrer les publications">
+              <a class="tab" th:href="@{/home}" th:classappend="${feedType == null} ? 'active'">Tout</a>
+              <a class="tab" th:href="@{/home(type='ACTUALITE')}" th:classappend="${feedType == 'ACTUALITE'} ? 'active'">Actualités</a>
+              <a class="tab" th:href="@{/home(type='COMPETITION')}" th:classappend="${feedType == 'COMPETITION'} ? 'active'">Compétitions</a>
+            </nav>
+          </div>
+
+          <p class="empty card card-pad" th:if="${#lists.isEmpty(posts)}">
+            Aucune publication pour le moment. Suivez des clubs pour alimenter votre fil !
+          </p>
+
+          <article class="card post reveal" th:each="post : ${posts}">
+            <div class="post-head">
+              <a th:href="@{/clubs/{id}(id=${post.club.id})}" class="club-logo"
+                 th:classappend="'c' + ${post.club.colorIndex}">
+                <img th:if="${post.club.logoUrl}" th:src="${post.club.logoUrl}" th:alt="${post.club.nom}"
+                     style="width:100%;height:100%;border-radius:14px;object-fit:cover">
+                <span th:unless="${post.club.logoUrl}" th:text="${post.club.initiales}">RC</span>
+              </a>
+              <div class="post-meta">
+                <strong th:text="${post.club.nom}">Nom du club</strong>
+                <span th:text="${post.datePublication}">Il y a 2 h</span>
+              </div>
+              <div class="post-badges">
+                <span class="badge" th:classappend="${post.type == 'COMPETITION'} ? 'badge-comp' : 'badge-news'"
+                      th:text="${post.type == 'COMPETITION'} ? 'Compétition' : 'Actualité'">Actualité</span>
+                <span class="badge badge-private" th:if="${post.visibilite == 'PRIVEE'}">
+                  <svg class="icon icon-sm"><use href="#i-lock"/></svg> Membres</span>
+                <span class="badge badge-public" th:unless="${post.visibilite == 'PRIVEE'}">
+                  <svg class="icon icon-sm"><use href="#i-globe"/></svg> Public</span>
+              </div>
+            </div>
+
+            <div class="post-body">
+              <h4 th:text="${post.titre}">Titre</h4>
+              <p th:text="${post.contenu}">Contenu de la publication…</p>
+            </div>
+
+            <div class="post-cover cover-pattern" th:classappend="'c' + ${post.club.colorIndex}" th:if="${post.imageUrl}">
+              <img th:src="${post.imageUrl}" th:alt="${post.titre}">
+            </div>
+
+            <div class="post-actions">
+              <!-- Like : POST classique vers un Controller MVC -->
+              <form th:action="@{/posts/{id}/like(id=${post.id})}" method="post" data-like style="display:contents">
+                <button type="submit" class="act" th:classappend="${post.likedByMe} ? 'liked'">
+                  <svg class="icon"><use href="#i-heart"/></svg>
+                  <span class="count" th:text="${post.likesCount}">0</span>
+                </button>
+              </form>
+              <button type="button" class="act" th:attr="data-toggle-comments='comments-' + ${post.id}"
+                      aria-expanded="false">
+                <svg class="icon"><use href="#i-message"/></svg>
+                <span th:text="${post.commentsCount}">0</span>
+              </button>
+              <button type="button" class="act report" th:attr="data-report=@{/posts/{id}/report(id=${post.id})}">
+                <svg class="icon"><use href="#i-flag"/></svg> Signaler
+              </button>
+            </div>
+
+            <div class="comments" th:id="'comments-' + ${post.id}">
+              <div class="comment" th:each="c : ${post.comments}">
+                <span class="avatar avatar-sm" th:text="${c.initiales}">AB</span>
+                <div><b th:text="${c.auteur}">Auteur</b><p th:text="${c.contenu}">Commentaire</p></div>
+              </div>
+              <!-- Tout étudiant authentifié peut commenter, même sans suivre le club -->
+              <form class="comment-form" th:action="@{/posts/{id}/comments(id=${post.id})}" method="post" data-comment>
+                <input class="input" type="text" name="contenu" maxlength="500" placeholder="Écrire un commentaire…" required>
+                <button class="btn btn-primary btn-sm" type="submit">Envoyer</button>
+              </form>
+            </div>
+          </article>
+        </section>
+
+        <!-- ===== Colonne latérale ===== -->
+        <aside class="side">
+
+          <section class="card card-pad reveal">
+            <div class="card-title"><h3>Clubs recommandés</h3><a class="link-more" th:href="@{/clubs}">Tout voir</a></div>
+            <div class="club-row" th:each="club : ${recommendedClubs}">
+              <a th:href="@{/clubs/{id}(id=${club.id})}" class="club-logo" th:classappend="'c' + ${club.colorIndex}">
+                <img th:if="${club.logoUrl}" th:src="${club.logoUrl}" th:alt="${club.nom}"
+                     style="width:100%;height:100%;border-radius:14px;object-fit:cover">
+                <span th:unless="${club.logoUrl}" th:text="${club.initiales}">RC</span>
+              </a>
+              <div class="grow">
+                <strong th:text="${club.nom}">Nom du club</strong>
+                <span><span th:text="${club.followersCount}">0</span> abonnés</span>
+              </div>
+              <!-- Follow / Unfollow : indépendant de l'adhésion -->
+              <form th:action="${club.followedByMe} ? @{/clubs/{id}/unfollow(id=${club.id})} : @{/clubs/{id}/follow(id=${club.id})}"
+                    method="post" data-follow>
+                <button type="submit" class="btn btn-sm"
+                        th:classappend="${club.followedByMe} ? 'btn-following' : 'btn-soft'"
+                        th:text="${club.followedByMe} ? 'Suivi' : 'Suivre'">Suivre</button>
+              </form>
+            </div>
+          </section>
+
+          <section class="card card-pad reveal">
+            <div class="card-title"><h3>Mes adhésions</h3><a class="link-more" th:href="@{/profile}">Profil</a></div>
+            <p class="empty" th:if="${#lists.isEmpty(memberships)}">Vous n'avez pas encore demandé à rejoindre un club.</p>
+            <div class="summary-item" th:each="m : ${memberships}">
+              <span class="club-logo" th:classappend="'c' + ${m.club.colorIndex}"
+                    style="width:38px;height:38px;border-radius:12px;font-size:13px" th:text="${m.club.initiales}">RC</span>
+              <div class="grow">
+                <strong th:text="${m.club.nom}">Nom du club</strong>
+                <span class="sub" th:if="${m.role != null}" th:text="${m.role == 'RESPONSABLE_MEDIA'} ? 'Responsable média' : 'Responsable adhésions'">Rôle</span>
+              </div>
+              <span class="badge"
+                    th:classappend="${m.statut == 'ACTIVE'} ? 'badge-active' : (${m.statut == 'EN_ATTENTE'} ? 'badge-pending' : 'badge-inactive')"
+                    th:text="${m.statut == 'ACTIVE'} ? 'Active' : (${m.statut == 'EN_ATTENTE'} ? 'En attente' : 'Inactive')">Active</span>
+            </div>
+          </section>
+
+        </aside>
+      </div>
+    </main>
+  </div>
+</div>
+
+<!-- ===== Modale de signalement (POST classique ; l'action est renseignée par le JS) ===== -->
+<div class="modal" id="reportModal" role="dialog" aria-modal="true" aria-labelledby="reportTitle">
+  <div class="modal-box">
+    <h3 id="reportTitle">Signaler cette publication</h3>
+    <p>Le contenu sera masqué immédiatement puis examiné par l'administration de l'ENSAM.</p>
+    <form method="post" action="#">
+      <input type="hidden" th:if="${_csrf != null}" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+      <div class="field">
+        <label for="reportReason">Motif</label>
+        <select class="input" id="reportReason" name="motif" required>
+          <option value="">Choisir un motif…</option>
+          <option>Contenu inapproprié</option>
+          <option>Harcèlement ou propos offensants</option>
+          <option>Information fausse ou trompeuse</option>
+          <option>Autre</option>
+        </select>
+      </div>
+      <div class="modal-actions">
+        <button type="button" class="btn btn-outline" data-close-modal>Annuler</button>
+        <button type="submit" class="btn btn-primary">Signaler</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<th:block th:replace="~{fragments/layout :: scripts}"></th:block>
+</body>
+</html>
